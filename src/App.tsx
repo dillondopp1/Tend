@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
+import { isPreviewHost } from './lib/preview';
 import Welcome from './screens/Welcome';
 import Join from './screens/Join';
 import Login from './screens/Login';
@@ -14,6 +15,7 @@ import TeacherHome from './screens/teacher/TeacherHome';
 export default function App() {
   return (
     <BrowserRouter>
+      {isPreviewHost(location.hostname) && <div className="preview-badge">PREVIEW · not live</div>}
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/join" element={<Join />} />
