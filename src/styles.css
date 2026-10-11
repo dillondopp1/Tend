@@ -130,3 +130,12 @@ textarea { width: 100%; min-height: 140px; font: inherit; font-size: 1.1rem; pad
 .ticks span.reading::after { content: ''; position: absolute; inset: 0; background: #fff; transform-origin: left; animation: readfill var(--read) linear forwards; }
 @keyframes readfill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .story-nav button:disabled { opacity: .55; }
+
+/* Teacher dashboard */
+.glance { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 14px 0 6px; }
+.glance div { background: #f6f2ff; border-radius: 14px; padding: 8px 4px; text-align: center; }
+.glance b { display: block; font-size: 1.25rem; font-weight: 900; }
+.glance span { font-size: .72rem; color: var(--muted); font-weight: 700; }
+.roster-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.roster-row .d { color: var(--muted); font-size: .85rem; font-weight: 700; }
+.no-pet { width: 48px; text-align: center; font-size: 1.8rem; }
