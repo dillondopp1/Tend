@@ -1,23 +1,23 @@
-import { W, H, type Game, type GameOpts, themeFor, petImage, sky, word, hud, phraseBar, phraseWords, rand, motifs } from './engine';
+import { W, H, type Game, type GameOpts, themeFor, petImage, sky, word, hud, Phrase, rand, motifs } from './engine';
 
 // Slide your pet to catch good things and the key-phrase words; dodge the storm clouds. 3 hearts.
 export function createCatch(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const words = phraseWords(o.phrase);
-  const got = words.map(() => false);
+  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const words = phrase.words;
   const good = motifs(o.motifs);
   const PY = H - 110, PR = 34;
   let px = W / 2, target = W / 2, hearts = 3, time = 0, spawn = 0, hurt = 0, pop = 0;
   type Item = { x: number; y: number; kind: 'good' | 'bad' | 'word'; e: string; w?: number; vy: number };
   const items: Item[] = [];
-  let nextWord = 0;
 
   const g: Game = {
     over: false, started: false, score: 0, phraseDone: false,
     press(x) { g.started = true; target = x; },
     move(x) { if (g.started) target = x; },
     step(dt) {
+      phrase.step(dt);
       if (!g.started || g.over) return;
       time += dt; hurt = Math.max(0, hurt - dt); pop = Math.max(0, pop - dt);
       px += (Math.max(PR, Math.min(W - PR, target)) - px) * Math.min(1, dt * 14);
@@ -27,8 +27,8 @@ export function createCatch(o: GameOpts): Game {
         spawn = 0.85 - level * 0.45;
         const r = Math.random();
         const vy = 170 + level * 230 + rand(0, 40);
-        if (nextWord < words.length && r < 0.16) items.push({ x: rand(40, W - 40), y: -30, kind: 'word', e: '', w: nextWord++, vy: vy * 0.8 });
-        else if (r < 0.16 + 0.22 + level * 0.18) items.push({ x: rand(30, W - 30), y: -30, kind: 'bad', e: '⛈️', vy });
+        if (r < 0.26) items.push({ x: rand(40, W - 40), y: -30, kind: 'word', e: '', w: phrase.next(), vy: vy * 0.8 });
+        else if (r < 0.26 + 0.2 + level * 0.16) items.push({ x: rand(30, W - 30), y: -30, kind: 'bad', e: '⛈️', vy });
         else items.push({ x: rand(30, W - 30), y: -30, kind: 'good', e: good[Math.floor(rand(0, good.length))], vy });
       }
       for (let i = items.length - 1; i >= 0; i--) {
@@ -38,12 +38,11 @@ export function createCatch(o: GameOpts): Game {
           items.splice(i, 1);
           if (it.kind === 'bad') { hearts -= 1; hurt = 0.6; if (hearts <= 0) g.over = true; }
           else if (it.kind === 'word') {
-            got[it.w!] = true; g.score += 3; pop = 0.4;
-            if (got.every(Boolean) && !g.phraseDone) { g.phraseDone = true; g.score += 10; }
+            g.score += 3; pop = 0.4;
+            if (phrase.collect(it.w!)) { g.phraseDone = true; g.score += 10; }
           } else { g.score += 1; pop = 0.2; }
         } else if (it.y > H + 40) {
           items.splice(i, 1);
-          if (it.kind === 'word') nextWord = Math.min(nextWord, it.w!);
         }
       }
     },
@@ -60,7 +59,8 @@ export function createCatch(o: GameOpts): Game {
       const s = 1 + pop * 0.5;
       ctx.drawImage(pet, -PR * 1.7 * s, -PR * 1.9 * s, PR * 3.4 * s, PR * 3.4 * s); ctx.restore();
       hud(ctx, g.score, t, g.started ? '❤️'.repeat(hearts) + '🤍'.repeat(3 - hearts) : 'Drag to move. Catch the good stuff, dodge ⛈️');
-      phraseBar(ctx, words, got, { ...t, ink: '#ffffff' });
+      phrase.drawBanner(ctx, 108);
+      phrase.drawCelebration(ctx);
     },
   };
   return g;

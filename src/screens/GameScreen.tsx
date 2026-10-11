@@ -31,8 +31,8 @@ export default function GameScreen() {
     const ctx = el.getContext('2d')!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     el.width = W * dpr; el.height = H * dpr;
-    const c = week.content as { theme?: { palette?: string; motifs?: string[] }; gameSparks?: string[] };
-    const g: Game = info.create({ species: state.pet.species, variant: state.pet.colorVariant, palette: c.theme?.palette, motifs: c.theme?.motifs, phrase: week.key_phrase });
+    const c = week.content as { theme?: { palette?: string; motifs?: string[] }; gameSparks?: string[]; keyPhraseRef?: string };
+    const g: Game = info.create({ species: state.pet.species, variant: state.pet.colorVariant, palette: c.theme?.palette, motifs: c.theme?.motifs, phrase: week.key_phrase, phraseRef: c.keyPhraseRef });
     let raf = 0, last = performance.now(), startedAt = 0, ended = false;
 
     const toGame = (e: PointerEvent) => {

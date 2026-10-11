@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type { SpeciesId } from '../domain/species';
 import type { Stage } from '../domain/growth';
 
-export type GameId = 'glide' | 'dash' | 'gather' | 'stack' | 'catch';
+export type GameId = 'glide' | 'dash' | 'gather' | 'stack' | 'catch' | 'run' | 'launch' | 'slice';
 
 export interface PetState {
   species: SpeciesId; colorVariant: number; name: string;

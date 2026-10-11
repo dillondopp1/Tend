@@ -110,3 +110,81 @@ describe('gather', () => {
     expect(g.over).toBe(false);
   });
 });
+
+import { createRun } from './run';
+import { createLaunch } from './launch';
+import { createSlice } from './slice';
+import { Phrase } from './engine';
+
+describe('phrase tracker', () => {
+  it('spawns words in order, completes, and starts another round', () => {
+    const p = new Phrase('beauty for ashes', 'Isaiah 61:3');
+    expect(p.words).toEqual(['beauty', 'for', 'ashes']);
+    const a = p.next(), b = p.next(), c = p.next();
+    expect([a, b, c]).toEqual([0, 1, 2]);
+    expect(p.collect(a)).toBe(false);
+    expect(p.next()).toBe(1); // skips collected words
+    p.collect(1);
+    expect(p.collect(2)).toBe(true);
+    expect(p.rounds).toBe(1);
+    expect(p.celebrating).toBe(true);
+    expect(p.got).toEqual([false, false, false]);
+  });
+});
+
+describe('run', () => {
+  it('standing still in one lane crashes; score under cap (60/s + 50)', () => {
+    const g = createRun(opts);
+    g.press(W / 2, 300); g.release!(); // tap on the right half: one lane change
+    let t = 0;
+    while (!g.over && t < 120) { g.step(1 / 60); t += 1 / 60; }
+    expect(g.over).toBe(true);
+    expect(g.score).toBeLessThanOrEqual(60 * t + 50);
+  });
+
+  it('swipes change lane, jump and slide without crashing the engine', () => {
+    const g = createRun(opts);
+    g.press(100, 300); g.move!(180, 300); g.release!();   // right
+    g.press(100, 300); g.move!(100, 220); g.release!();   // jump
+    for (let k = 0; k < 60; k++) g.step(1 / 60);
+    g.press(100, 300); g.move!(100, 380); g.release!();   // slide
+    for (let k = 0; k < 60; k++) g.step(1 / 60);
+    expect(g.started).toBe(true);
+  });
+});
+
+describe('launch', () => {
+  it('a full pull flies, hits or misses, and the game ends when shots run out', () => {
+    const g = createLaunch(opts);
+    let t = 0, fired = 0;
+    while (!g.over && t < 120) {
+      if (Math.round(t * 60) % 240 === 0) { g.press(78, 540); g.move!(20, 560 - Math.random() * 60); g.release!(); fired++; }
+      g.step(1 / 60); t += 1 / 60;
+    }
+    expect(fired).toBeGreaterThan(2);
+    expect(g.score).toBeGreaterThanOrEqual(0);
+    expect(g.score).toBeLessThanOrEqual(120 * t + 50);
+  });
+
+  it('a tiny tap does not waste a shot', () => {
+    const g = createLaunch(opts);
+    g.press(78, 530); g.move!(80, 532); g.release!();
+    for (let k = 0; k < 30; k++) g.step(1 / 60);
+    expect(g.over).toBe(false);
+  });
+});
+
+describe('slice', () => {
+  it('sweeping the screen slices things and eventually storms end the run (25/s + 50 cap)', () => {
+    const g = createSlice(opts);
+    let t = 0;
+    g.press(0, 300);
+    while (!g.over && t < 240) {
+      const x = (Math.sin(t * 6) * 0.5 + 0.5) * W, y = 150 + (Math.cos(t * 4.3) * 0.5 + 0.5) * 400;
+      g.move!(x, y); g.step(1 / 60); t += 1 / 60;
+    }
+    expect(g.over).toBe(true);
+    expect(g.score).toBeGreaterThan(0);
+    expect(g.score).toBeLessThanOrEqual(25 * t + 50);
+  });
+});

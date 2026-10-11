@@ -1,23 +1,22 @@
-import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, hud, phraseBar, phraseWords } from './engine';
+import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, hud, Phrase } from './engine';
 
 // Tap to drop the sliding block; overhang is trimmed. Every 5th block carries the next key-phrase word.
 export function createStack(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const words = phraseWords(o.phrase);
-  const got = words.map(() => false);
+  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const words = phrase.words;
   const BH = 34, BASE_Y = H - 90;
   type Block = { x: number; w: number; c: string; word?: number };
   const blocks: Block[] = [{ x: W / 2 - 80, w: 160, c: t.block[0] }];
   let cur: Block & { dir: number } = { x: 0, w: 160, c: t.block[1], dir: 1 };
   let camY = 0, chip: { x: number; y: number; w: number; vy: number; c: string } | null = null, perfect = 0;
-  let nextWord = 0;
 
   function newBlock() {
     const top = blocks[blocks.length - 1];
     const n = blocks.length;
     cur = { x: n % 2 ? -top.w * 0.5 : W - top.w * 0.5, w: top.w, c: t.block[n % t.block.length], dir: n % 2 ? 1 : -1 };
-    if (n % 5 === 0 && nextWord < words.length) cur.word = nextWord++;
+    if (n % 3 === 0) cur.word = phrase.next();
   }
 
   const g: Game = {
@@ -35,13 +34,13 @@ export function createStack(o: GameOpts): Game {
       }
       blocks.push({ x: left, w: right - left, c: cur.c, word: cur.word });
       if (cur.word !== undefined) {
-        got[cur.word] = true;
-        if (got.every(Boolean) && !g.phraseDone) { g.phraseDone = true; g.score += 3; }
+        if (phrase.collect(cur.word)) { g.phraseDone = true; g.score += 3; }
       }
       g.score += 1;
       newBlock();
     },
     step(dt) {
+      phrase.step(dt);
       perfect = Math.max(0, perfect - dt);
       const targetCam = Math.max(0, (blocks.length - 8) * BH);
       camY += (targetCam - camY) * Math.min(1, dt * 5);
@@ -65,7 +64,8 @@ export function createStack(o: GameOpts): Game {
       ctx.drawImage(pet, top.x + top.w / 2 - ps / 2, topY - ps + 8 - (g.started && !g.over ? BH : 0), ps, ps);
       ctx.restore();
       hud(ctx, g.score, t, !g.started ? 'Tap to drop each block. Stack it high!' : perfect > 0 ? 'Perfect! ✨' : undefined);
-      phraseBar(ctx, words, got, { ...t, ink: '#ffffff' });
+      phrase.drawBanner(ctx, 108);
+      phrase.drawCelebration(ctx);
 
       function drawBlock(c: CanvasRenderingContext2D, b: Block, y: number) {
         c.fillStyle = b.c; roundRect(c, b.x, y, b.w, BH - 3, 8);

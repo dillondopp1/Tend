@@ -1,8 +1,8 @@
-import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, hud, phraseBar, phraseWords, motifs } from './engine';
+import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, hud, Phrase, motifs } from './engine';
 
 // Match-3, 60 seconds. Swipe a tile (or tap two neighbours) to swap; 3+ in a row clear and cascade.
 // Key-phrase words ride on some tiles: clear one to collect its word.
-const COLS = 7, ROWS = 8, CELL = 48, OX = (W - COLS * CELL) / 2, OY = 130, TIME = 60;
+const COLS = 7, ROWS = 8, CELL = 48, OX = (W - COLS * CELL) / 2, OY = 146, TIME = 60;
 const EXTRA = ['⭐', '💖', '☀️', '🍎', '🌸', '💧', '🌳', '🕊️'];
 
 type Tile = { k: number; word?: number; fall: number; pop: number };
@@ -10,18 +10,18 @@ type Tile = { k: number; word?: number; fall: number; pop: number };
 export function createGather(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const words = phraseWords(o.phrase);
-  const got = words.map(() => false);
+  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const words = phrase.words;
   const kinds = [...new Set([...motifs(o.motifs), ...EXTRA])].slice(0, 6);
   let grid: (Tile | null)[][] = [];
   let left = TIME, sel: [number, number] | null = null, down: { x: number; y: number; c: [number, number] } | null = null;
-  let busy = 0, combo = 0, toast = '', toastT = 0, nextWord = 0, wordsOnBoard = 0, flash = 0;
+  let busy = 0, combo = 0, toast = '', toastT = 0, wordsOnBoard = 0, flash = 0;
   const swapAnim: { a: [number, number]; b: [number, number]; t: number; back: boolean } = { a: [0, 0], b: [0, 0], t: 0, back: false };
 
   const rnd = () => Math.floor(Math.random() * kinds.length);
   const fresh = (fall = 0): Tile => {
     const tile: Tile = { k: rnd(), fall, pop: 0 };
-    if (wordsOnBoard < 1 && nextWord < words.length && Math.random() < 0.12) { tile.word = nextWord++; wordsOnBoard++; }
+    if (wordsOnBoard < 2 && Math.random() < 0.2) { tile.word = phrase.next(); wordsOnBoard++; }
     return tile;
   };
   // Start without ready-made matches.
@@ -53,8 +53,8 @@ export function createGather(o: GameOpts): Game {
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (m[r][c]) {
       const tile = grid[r][c]!;
       if (tile.word !== undefined) {
-        got[tile.word] = true; wordsOnBoard--; g.score += 50; flash = 0.6; toast = `“${words[tile.word]}”`; toastT = 1.2;
-        if (got.every(Boolean) && !g.phraseDone) { g.phraseDone = true; g.score += 200; toast = 'Phrase complete! ✨'; toastT = 1.6; }
+        wordsOnBoard--; g.score += 50; flash = 0.6; toast = `“${words[tile.word]}”`; toastT = 1.2;
+        if (phrase.collect(tile.word)) { g.phraseDone = true; g.score += 200; }
       }
       grid[r][c] = null; n++;
     }
@@ -117,6 +117,7 @@ export function createGather(o: GameOpts): Game {
       else sel = sel && sel[0] === c[0] && sel[1] === c[1] ? null : c;
     },
     step(dt) {
+      phrase.step(dt);
       toastT = Math.max(0, toastT - dt); flash = Math.max(0, flash - dt);
       swapAnim.t = Math.max(0, swapAnim.t - dt);
       let falling = false;
@@ -151,13 +152,15 @@ export function createGather(o: GameOpts): Game {
         } else { ctx.font = '28px serif'; ctx.fillText(kinds[tile.k], x, y + 1); }
       }
       // Timer bar
-      ctx.fillStyle = 'rgba(0,0,0,.12)'; roundRect(ctx, OX, OY - 26, COLS * CELL, 10, 5);
-      ctx.fillStyle = left < 10 ? '#ff6b6b' : '#7c5cff'; roundRect(ctx, OX, OY - 26, COLS * CELL * (left / TIME), 10, 5);
-      const by = OY + ROWS * CELL + 14;
-      ctx.drawImage(pet, W / 2 - 34, by + (flash > 0 ? -8 : 0), 68, 68);
-      if (toastT > 0) { ctx.fillStyle = '#5b3fe0'; ctx.font = '900 20px Nunito, system-ui, sans-serif'; ctx.fillText(toast, W / 2, by + 84); }
+      const ty = OY + ROWS * CELL + 14;
+      ctx.fillStyle = 'rgba(0,0,0,.12)'; roundRect(ctx, OX, ty, COLS * CELL, 10, 5);
+      ctx.fillStyle = left < 10 ? '#ff6b6b' : '#7c5cff'; roundRect(ctx, OX, ty, COLS * CELL * (left / TIME), 10, 5);
+      const by = ty + 16;
+      ctx.drawImage(pet, W / 2 - 30, by + (flash > 0 ? -8 : 0), 60, 60);
+      if (toastT > 0) { ctx.fillStyle = '#5b3fe0'; ctx.font = '900 20px Nunito, system-ui, sans-serif'; ctx.fillText(toast, W / 2, by + 74); }
       hud(ctx, g.score, t, g.started ? `${Math.ceil(left)}s` : 'Swipe a tile to swap. Match 3!');
-      phraseBar(ctx, words, got, { ...t, ink: '#ffffff' });
+      phrase.drawBanner(ctx, 108);
+      phrase.drawCelebration(ctx);
     },
   };
   return g;

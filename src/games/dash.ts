@@ -1,12 +1,12 @@
-import { W, H, type Game, type GameOpts, themeFor, petImage, sky, word, hud, phraseBar, phraseWords, rand, motifs } from './engine';
+import { W, H, type Game, type GameOpts, themeFor, petImage, sky, word, hud, Phrase, rand, motifs } from './engine';
 
 // Dino-runner: the pet runs on its own. Tap to jump, hold for a higher jump. Hop over the stones,
 // grab key-phrase words floating in the air. Score = distance, speed ramps up.
 export function createDash(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const words = phraseWords(o.phrase);
-  const got = words.map(() => false);
+  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const words = phrase.words;
   const deco = motifs(o.motifs);
   const GROUND = H - 120, PX = 80, PS = 70;
   let y = 0, vy = 0, holding = false, holdT = 0, onGround = true;
@@ -14,7 +14,6 @@ export function createDash(o: GameOpts): Game {
   const obs: { x: number; w: number; h: number; e: string }[] = [];
   const floaters: { x: number; y: number; w: number }[] = [];
   const hills = Array.from({ length: 4 }, (_, i) => ({ x: i * 120, e: deco[i % deco.length] }));
-  let nextWord = 0;
   const OBST = ['🪨', '🌵', '🪵'];
 
   const jump = () => { if (onGround) { vy = -620; onGround = false; holdT = 0; squash = 0.15; } };
@@ -24,6 +23,7 @@ export function createDash(o: GameOpts): Game {
     press() { if (g.over) return; g.started = true; holding = true; jump(); },
     release() { holding = false; },
     step(dt) {
+      phrase.step(dt);
       squash = Math.max(0, squash - dt); flash = Math.max(0, flash - dt);
       if (!g.started || g.over) return;
       speed = Math.min(560, speed + 9 * dt);
@@ -41,7 +41,7 @@ export function createDash(o: GameOpts): Game {
       if (spawnIn <= 0) {
         const big = Math.random() < Math.min(0.45, dist / 12000);
         obs.push({ x: W + 30, w: big ? 46 : 34, h: big ? 56 : 40, e: OBST[Math.floor(rand(0, OBST.length))] });
-        if (nextWord < words.length && Math.random() < 0.45) floaters.push({ x: W + 30 + rand(110, 170), y: GROUND - rand(120, 170), w: nextWord++ });
+        if (Math.random() < 0.6) floaters.push({ x: W + 30 + rand(110, 170), y: GROUND - rand(120, 170), w: phrase.next() });
         spawnIn = rand(0.85, 1.6) * (300 / speed) + 0.45;
       }
       const py = GROUND + y;
@@ -54,9 +54,9 @@ export function createDash(o: GameOpts): Game {
       for (let i = floaters.length - 1; i >= 0; i--) {
         const f = floaters[i]; f.x -= speed * dt;
         if (Math.abs(f.x - PX) < 40 && Math.abs(f.y - (py - PS / 2)) < 44) {
-          floaters.splice(i, 1); got[f.w] = true; bonus += 25; flash = 0.4;
-          if (got.every(Boolean) && !g.phraseDone) { g.phraseDone = true; bonus += 50; }
-        } else if (f.x < -60) { floaters.splice(i, 1); nextWord = Math.min(nextWord, f.w); }
+          floaters.splice(i, 1); bonus += 8; flash = 0.4;
+          if (phrase.collect(f.w)) { g.phraseDone = true; bonus += 15; }
+        } else if (f.x < -60) floaters.splice(i, 1);
       }
       g.score = Math.floor(dist / 20) + bonus;
     },
@@ -78,7 +78,8 @@ export function createDash(o: GameOpts): Game {
       if (flash > 0) { ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = 30; }
       ctx.drawImage(pet, -PS / 2 * sx - 6, -PS * sy - 4, PS * sx + 12, PS * sy + 12); ctx.restore();
       hud(ctx, g.score, t, g.started ? undefined : 'Tap to jump. Hold for a big jump!');
-      phraseBar(ctx, words, got, { ...t, ink: '#ffffff' });
+      phrase.drawBanner(ctx, 108);
+      phrase.drawCelebration(ctx);
     },
   };
   return g;

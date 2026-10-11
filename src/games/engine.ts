@@ -95,10 +95,103 @@ export interface Game {
   phraseDone: boolean;
 }
 
-export interface GameOpts { species: SpeciesId; variant: number; palette?: string; motifs?: string[]; phrase: string }
+export interface GameOpts { species: SpeciesId; variant: number; palette?: string; motifs?: string[]; phrase: string; phraseRef?: string }
 
 export function phraseWords(phrase: string): string[] {
   return phrase.split(/\s+/).map((w) => w.replace(/[^\p{L}\p{N}'’-]/gu, '')).filter(Boolean);
 }
 
 export const rand = (a: number, b: number) => a + Math.random() * (b - a);
+
+/**
+ * The week's key phrase as the heart of a game: words spawn in order, collected words light up in the
+ * always-visible phrase banner, and finishing it shows the whole phrase + reference big, then starts
+ * another round so the phrase keeps coming back.
+ */
+export class Phrase {
+  readonly words: string[];
+  got: boolean[];
+  rounds = 0;
+  private cursor = 0;
+  private celebrate = 0;
+  constructor(phrase: string, readonly ref = '') {
+    this.words = phraseWords(phrase);
+    if (!this.words.length) this.words = ['Spark'];
+    this.got = this.words.map(() => false);
+  }
+  /** Index of the next word to put in the world (skips ones already collected this round). */
+  next(): number {
+    for (let k = 0; k < this.words.length; k++) {
+      const i = (this.cursor + k) % this.words.length;
+      if (!this.got[i]) { this.cursor = (i + 1) % this.words.length; return i; }
+    }
+    return 0;
+  }
+  /** Returns true when this word completed the phrase. */
+  collect(i: number): boolean {
+    this.got[i] = true;
+    if (this.got.every(Boolean)) {
+      this.rounds++; this.celebrate = 2.2; this.got = this.words.map(() => false); this.cursor = 0;
+      return true;
+    }
+    return false;
+  }
+  step(dt: number) { this.celebrate = Math.max(0, this.celebrate - dt); }
+  get celebrating() { return this.celebrate > 0; }
+
+  /** Banner with the whole phrase near the top; collected words glow. */
+  drawBanner(ctx: CanvasRenderingContext2D, y = 92) {
+    ctx.save();
+    ctx.font = '900 19px Nunito, system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const gap = 8;
+    const widths = this.words.map((w) => ctx.measureText(w).width);
+    const total = widths.reduce((a, b) => a + b + gap, -gap);
+    const scale = Math.min(1, (W - 40) / total);
+    ctx.translate(W / 2, y); ctx.scale(scale, scale);
+    ctx.fillStyle = 'rgba(43,33,64,.55)';
+    ctx.beginPath(); ctx.roundRect(-total / 2 - 14, -17, total + 28, 34, 17); ctx.fill();
+    let x = -total / 2;
+    this.words.forEach((w, i) => {
+      ctx.fillStyle = this.got[i] ? '#ffd23d' : 'rgba(255,255,255,.55)';
+      if (this.got[i]) { ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = 12; } else ctx.shadowBlur = 0;
+      ctx.fillText(w, x, 1); x += widths[i] + gap;
+    });
+    ctx.restore();
+    if (this.ref) {
+      ctx.font = '800 12px Nunito, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(43,33,64,.7)';
+      ctx.fillText(this.ref + (this.rounds ? `  ·  ✨ x${this.rounds}` : ''), W / 2, y + 26);
+    }
+  }
+
+  /** Full-screen moment when the phrase is completed. */
+  drawCelebration(ctx: CanvasRenderingContext2D) {
+    if (!this.celebrating) return;
+    const a = Math.min(1, this.celebrate / 0.4);
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(43,33,64,.72)'; ctx.fillRect(0, H / 2 - 110, W, 220);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffd23d';
+    ctx.font = '900 16px Nunito, system-ui, sans-serif'; ctx.fillText('✨ PHRASE COMPLETE ✨', W / 2, H / 2 - 74);
+    ctx.fillStyle = '#ffffff';
+    const text = `“${this.words.join(' ')}”`;
+    let size = 34; ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`;
+    while (ctx.measureText(text).width > W - 30 && size > 18) { size -= 2; ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`; }
+    ctx.fillText(text, W / 2, H / 2 - 10);
+    if (this.ref) { ctx.font = '800 17px Nunito, system-ui, sans-serif'; ctx.fillStyle = '#ffd23d'; ctx.fillText(this.ref, W / 2, H / 2 + 36); }
+    ctx.font = '800 14px Nunito, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.8)';
+    ctx.fillText('Bonus! Collect it again for more', W / 2, H / 2 + 72);
+    ctx.restore();
+  }
+}
+
+/** A big, readable word token used by the newer games. */
+export function bigWord(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, scale = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+  ctx.font = '900 20px Nunito, system-ui, sans-serif';
+  const w = ctx.measureText(text).width + 26;
+  ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = 16;
+  ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#ffb43d'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.roundRect(-w / 2, -19, w, 38, 19); ctx.fill(); ctx.shadowBlur = 0; ctx.stroke();
+  ctx.fillStyle = '#5b3fe0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 0, 1);
+  ctx.restore();
+  return w * scale;
+}

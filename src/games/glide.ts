@@ -1,17 +1,16 @@
-import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, word, hud, phraseBar, phraseWords, rand, motifs } from './engine';
+import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, word, hud, Phrase, rand, motifs } from './engine';
 
 // Flappy-style: tap to flap through gaps. Each gap = 1 point; key-phrase words float in some gaps (+1 each).
 export function createGlide(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const words = phraseWords(o.phrase);
-  const got = words.map(() => false);
+  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const words = phrase.words;
   const deco = motifs(o.motifs);
   const R = 24, GAP = 170, PW = 64, SPEED = 150;
   let y = H * 0.42, vy = 0, rot = 0, dist = 0, flash = 0;
   const pipes: { x: number; gapY: number; passed: boolean; word?: number; wordGot?: boolean }[] = [];
   const clouds = Array.from({ length: 5 }, () => ({ x: rand(0, W), y: rand(40, H - 160), e: deco[Math.floor(rand(0, deco.length))], s: rand(18, 30) }));
-  let nextWord = 0;
 
   const g: Game = {
     over: false, started: false, score: 0, phraseDone: false,
@@ -20,6 +19,7 @@ export function createGlide(o: GameOpts): Game {
       g.started = true; vy = -330;
     },
     step(dt) {
+      phrase.step(dt);
       if (!g.started || g.over) { rot = Math.sin(performance.now() / 300) * 0.1; y = H * 0.42 + Math.sin(performance.now() / 300) * 8; return; }
       const speed = SPEED + Math.min(70, g.score * 2);
       vy += 980 * dt; y += vy * dt; rot = Math.max(-0.5, Math.min(1.1, vy / 600));
@@ -27,7 +27,7 @@ export function createGlide(o: GameOpts): Game {
       for (const c of clouds) { c.x -= speed * 0.25 * dt; if (c.x < -30) { c.x = W + 30; c.y = rand(40, H - 160); } }
       if (!pipes.length || pipes[pipes.length - 1].x < W - 210) {
         const p: (typeof pipes)[number] = { x: W + 20, gapY: rand(140, H - 150 - GAP), passed: false };
-        if (nextWord < words.length && pipes.length % 2 === 1) p.word = nextWord++;
+        if (pipes.length % 2 === 1) p.word = phrase.next();
         pipes.push(p);
       }
       for (const p of pipes) {
@@ -35,14 +35,13 @@ export function createGlide(o: GameOpts): Game {
         const px = 90;
         if (!p.passed && p.x + PW < px - R) { p.passed = true; g.score += 1; }
         if (p.word !== undefined && !p.wordGot && Math.abs(p.x + PW / 2 - px) < 30 && Math.abs(p.gapY + GAP / 2 - y) < 40) {
-          p.wordGot = true; got[p.word] = true; g.score += 1; flash = 0.4;
-          if (got.every(Boolean) && !g.phraseDone) { g.phraseDone = true; g.score += 5; }
+          p.wordGot = true; g.score += 1; flash = 0.4;
+          if (phrase.collect(p.word)) { g.phraseDone = true; g.score += 3; }
         }
         if (px + R - 6 > p.x && px - R + 6 < p.x + PW && (y - R + 6 < p.gapY || y + R - 6 > p.gapY + GAP)) g.over = true;
       }
       while (pipes.length && pipes[0].x < -PW - 10) {
-        const p = pipes.shift()!;
-        if (p.word !== undefined && !p.wordGot) nextWord = Math.min(nextWord, p.word); // missed word comes back
+        pipes.shift();
       }
       if (y + R > H - 50 || y < -40) g.over = true;
     },
@@ -65,7 +64,8 @@ export function createGlide(o: GameOpts): Game {
       if (flash > 0) { ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = 30; }
       ctx.drawImage(pet, -R * 1.6, -R * 1.7, R * 3.2, R * 3.2); ctx.restore();
       hud(ctx, g.score, t, g.started ? undefined : 'Tap to flap!');
-      phraseBar(ctx, words, got, { ...t, ink: '#ffffff' });
+      phrase.drawBanner(ctx, 108);
+      phrase.drawCelebration(ctx);
     },
   };
   return g;
