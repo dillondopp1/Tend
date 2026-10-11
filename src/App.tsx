@@ -4,6 +4,8 @@ import Join from './screens/Join';
 import Login from './screens/Login';
 import Adopt from './screens/Adopt';
 import Home from './screens/Home';
+import Spark from './screens/Spark';
+import WeekList from './screens/WeekList';
 import TeacherLogin from './screens/teacher/TeacherLogin';
 import TeacherHome from './screens/teacher/TeacherHome';
 
@@ -16,6 +18,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/adopt" element={<Adopt />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/spark/:date" element={<Spark />} />
+        <Route path="/week" element={<WeekList />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />
         <Route path="/teacher" element={<TeacherHome />} />
         <Route path="*" element={<Navigate to="/" replace />} />

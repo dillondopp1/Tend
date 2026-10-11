@@ -1,0 +1,34 @@
+{
+  "id": 41,
+  "startDate": "2026-10-05",
+  "endDate": "2026-10-11",
+  "title": "“He Hath Borne Our Griefs, and Carried Our Sorrows”",
+  "scriptureBlock": "Isaiah 50–57",
+  "manualUrl": "https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/41?lang=eng",
+  "keyPhrase": "borne our griefs",
+  "keyPhraseRef": "Isaiah 53:4",
+  "theme": { "palette": "sunset", "motifs": ["heart", "dove", "olive", "water"] },
+  "sparks": [
+    {
+      "day": 7,
+      "section": "Jesus Christ took upon Himself my sins and sorrows.",
+      "manualAnchor": "https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/41?lang=eng",
+      "cards": [
+        { "type": "hook", "text": "Movie heroes win by crushing the bad guy. Isaiah's Savior wins by carrying our pain Himself." },
+        { "type": "verse", "ref": "Isaiah 53:4", "text": "Surely he hath borne our griefs, and carried our sorrows: yet we did esteem him stricken, smitten of God, and afflicted." },
+        { "type": "meaning", "text": "Centuries before Jesus was born, Isaiah described a Savior who would be despised and hurt. He frees us by taking our place: our sins, and also our sadness and grief." },
+        { "type": "try", "text": "Read Isaiah 53:4–6 again, swapping \"we\" and \"our\" for \"I\" and \"my,\" and notice how it feels." }
+      ],
+      "reflectPrompt": "What's something heavy you'd be willing to let Him help carry?"
+    }
+  ],
+  "gameSparks": [
+    "He hath borne our griefs.",
+    "He carried our sorrows too.",
+    "With his stripes we are healed.",
+    "The Lord wants you to come home.",
+    "His ways are higher than ours.",
+    "Seek the Lord while He may be found."
+  ],
+  "phraseMeaning": "Jesus Christ didn't only pay for sins. Isaiah says He took on our griefs and sorrows too, so we never have to carry them alone."
+}

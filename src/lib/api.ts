@@ -38,3 +38,36 @@ export const adoptPet = (species: SpeciesId, color: number, name: string) =>
 export const completeSpark = (date: string) => rpc<SparkResult>('complete_spark', { p_date: date });
 export const recordGame = (game: GameId, score: number, durationMs: number) =>
   rpc<GameResult>('record_game', { p_game: game, p_score: score, p_duration_ms: Math.round(durationMs) });
+
+export type SparkCard =
+  | { type: 'hook' | 'meaning' | 'try'; text: string }
+  | { type: 'verse'; ref: string; text: string };
+
+export interface DaySpark { day: number; section: string; manualAnchor: string; cards: SparkCard[]; reflectPrompt?: string }
+
+export interface Week {
+  id: number; start_date: string; end_date: string; title: string; scripture_block: string; manual_url: string;
+  key_phrase: string; content: { keyPhraseRef?: string; sparks?: DaySpark[]; gameSparks?: string[]; phraseMeaning?: string };
+}
+
+export async function getWeek(id: number): Promise<Week | null> {
+  const { data, error } = await supabase.from('weeks')
+    .select('id,start_date,end_date,title,scripture_block,manual_url,key_phrase,content').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data as Week | null;
+}
+
+/** Day 1 = Monday … 7 = Sunday, for a date inside the week starting `start`. */
+export function dayOfWeek(start: string, date: string): number {
+  return Math.round((Date.parse(date) - Date.parse(start)) / 86_400_000) + 1;
+}
+
+export function dateForDay(start: string, day: number): string {
+  return new Date(Date.parse(start) + (day - 1) * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** The spark for a day, falling back to the nearest earlier one so a week is never empty. */
+export function sparkFor(week: Week, day: number): DaySpark | null {
+  const s = (week.content.sparks ?? []).slice().sort((a, b) => a.day - b.day);
+  return s.find((x) => x.day === day) ?? [...s].reverse().find((x) => x.day <= day) ?? s[0] ?? null;
+}
