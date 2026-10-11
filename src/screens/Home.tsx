@@ -75,7 +75,7 @@ export default function Home() {
         <Link to="/week"><button className="secondary">This week's Sparks</button></Link>
       </div>
 
-      <button className="secondary soon" disabled>🎮 Games: coming soon</button>
+      <Link to="/play"><button>🎮 Play games{joy < 70 ? ` · ${p.name} wants to play!` : ''}</button></Link>
       <button className="ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
     </main>
   );

@@ -71,3 +71,7 @@ export function sparkFor(week: Week, day: number): DaySpark | null {
   const s = (week.content.sparks ?? []).slice().sort((a, b) => a.day - b.day);
   return s.find((x) => x.day === day) ?? [...s].reverse().find((x) => x.day <= day) ?? s[0] ?? null;
 }
+
+export interface BoardRow { name: string; score: number; species: SpeciesId; color: number; me: boolean }
+export interface Board { top: BoardRow[]; weekBest: number | null; personalBest: number | null }
+export const leaderboard = (game: GameId) => rpc<Board>('leaderboard', { p_game: game });

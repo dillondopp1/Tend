@@ -21,11 +21,27 @@ export default function Spark() {
   const [reflecting, setReflecting] = useState(false);
   const [text, setText] = useState('');
   const [saved, setSaved] = useState(false);
+  const [seen, setSeen] = useState(0); // highest card index whose read time has finished
 
   useEffect(() => {
     if (!session) return;
     syncPet().then(async (s) => { setState(s); if (s.weekId) setWeek(await getWeek(s.weekId)); });
   }, [session]);
+
+  // Each card stays up long enough to actually read it (about 4 words a second, 2.5–9 s) before Next unlocks.
+  const cardsForTimer = week ? sparkFor(week, dayOfWeek(week.start_date, date))?.cards : undefined;
+  const readMs = (k: number) => {
+    const c = cardsForTimer?.[k];
+    if (!c) return 0;
+    const words = c.text.split(/\s+/).length + (c.type === 'verse' ? 4 : 0);
+    return Math.min(9000, Math.max(2500, words * 250));
+  };
+  useEffect(() => {
+    if (!cardsForTimer || i >= cardsForTimer.length || i < seen) return;
+    const t = setTimeout(() => setSeen(i + 1), readMs(i));
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i, seen, cardsForTimer?.length]);
 
   if (session === undefined) return null;
   if (!session) return <Navigate to="/" replace />;
@@ -39,6 +55,9 @@ export default function Spark() {
   const alreadyDone = state.sparksDone.includes(date);
   const cards = spark.cards;
   const last = i >= cards.length;
+  // Re-reading a Spark already done for that day: no waiting.
+  const ready = i < seen || alreadyDone;
+  const next = () => { if (ready) setI(i + 1); };
 
   async function feed() {
     setBusy(true); setError('');
@@ -85,14 +104,16 @@ export default function Spark() {
   const card = cards[Math.min(i, cards.length - 1)];
   return (
     <div className={`story ${last ? 'try' : card.type}`}>
-      <div className="ticks">{cards.map((_, k) => <span key={k} className={k <= i ? 'on' : ''} />)}</div>
+      <div className="ticks">{cards.map((_, k) => <span key={k}
+        className={k < i || (k === i && ready) || last ? 'on' : k === i ? 'reading' : ''}
+        style={k === i && !ready ? { ['--read' as string]: `${readMs(k)}ms` } : undefined} />)}</div>
       <div className="story-head">
         <span>{spark.section.length > 42 ? week.scripture_block : spark.section}</span>
         <button onClick={() => nav('/home')}>✕</button>
       </div>
       {!last && <div className="tapzone">
         <div onClick={() => setI(Math.max(0, i - 1))} />
-        <div onClick={() => setI(i + 1)} />
+        <div onClick={next} />
       </div>}
       {last ? (
         <div className="story-body center" key="feed">
@@ -106,14 +127,14 @@ export default function Spark() {
           <div className="story-kind">{KIND[card.type]}</div>
           <p className="story-text">{card.type === 'verse' ? `“${card.text}”` : card.text}</p>
           {card.type === 'verse' && <p className="story-ref">{card.ref}</p>}
-          {i === 0 && <p className="story-ref" style={{ opacity: .7, fontWeight: 700 }}>Tap to keep going →</p>}
+          
         </div>
       )}
       <div className="story-nav">
         {i > 0 && <button className="secondary" onClick={() => setI(i - 1)}>‹</button>}
         {last
           ? <button onClick={feed} disabled={busy}>{busy ? 'Feeding…' : `Feed ${pet.name} 🍎`}</button>
-          : <button onClick={() => setI(i + 1)}>Next</button>}
+          : <button onClick={next} disabled={!ready}>{ready ? 'Next' : 'Reading…'}</button>}
       </div>
     </div>
   );

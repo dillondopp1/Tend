@@ -6,6 +6,8 @@ import Adopt from './screens/Adopt';
 import Home from './screens/Home';
 import Spark from './screens/Spark';
 import WeekList from './screens/WeekList';
+import Play from './screens/Play';
+import GameScreen from './screens/GameScreen';
 import TeacherLogin from './screens/teacher/TeacherLogin';
 import TeacherHome from './screens/teacher/TeacherHome';
 
@@ -20,6 +22,8 @@ export default function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/spark/:date" element={<Spark />} />
         <Route path="/week" element={<WeekList />} />
+        <Route path="/play" element={<Play />} />
+        <Route path="/play/:game" element={<GameScreen />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />
         <Route path="/teacher" element={<TeacherHome />} />
         <Route path="*" element={<Navigate to="/" replace />} />
