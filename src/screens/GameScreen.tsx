@@ -41,10 +41,15 @@ export default function GameScreen() {
     };
     const down = (e: PointerEvent) => { e.preventDefault(); const [x, y] = toGame(e); if (!g.started) startedAt = performance.now(); g.press(x, y); };
     const move = (e: PointerEvent) => { if (g.move) { const [x, y] = toGame(e); g.move(x, y); } };
-    const key = (e: KeyboardEvent) => { if (e.code === 'Space') { e.preventDefault(); if (!g.started) startedAt = performance.now(); g.press(W / 2, H / 2); } };
+    const up = () => g.release?.();
+    const keyUp = (e: KeyboardEvent) => { if (e.code === 'Space') g.release?.(); };
+    const key = (e: KeyboardEvent) => { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); if (!g.started) startedAt = performance.now(); g.press(W / 2, H / 2); } };
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
     window.addEventListener('keydown', key);
+    window.addEventListener('keyup', keyUp);
 
     const frame = (now: number) => {
       const dt = Math.min(0.033, (now - last) / 1000); last = now;
@@ -71,7 +76,10 @@ export default function GameScreen() {
       cancelAnimationFrame(raf);
       el.removeEventListener('pointerdown', down);
       el.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       window.removeEventListener('keydown', key);
+      window.removeEventListener('keyup', keyUp);
     };
   }, [state, week, info, over, run]);
 

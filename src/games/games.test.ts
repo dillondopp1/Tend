@@ -59,3 +59,54 @@ describe('catch', () => {
     expect(g.score).toBeLessThanOrEqual(10 * t + 50);
   });
 });
+
+import { createDash } from './dash';
+import { createGather } from './gather';
+
+describe('dash', () => {
+  it('a non-jumper hits a stone; score stays under the server cap (40/s + 50)', () => {
+    const g = createDash(opts);
+    g.press(0, 0); g.release!();
+    let t = 0;
+    while (!g.over && t < 60) { g.step(1 / 60); t += 1 / 60; }
+    expect(g.over).toBe(true);
+    expect(g.score).toBeLessThanOrEqual(40 * t + 50);
+  });
+
+  it('a jump lands back on the ground', () => {
+    const g = createDash(opts);
+    g.press(0, 0);
+    for (let k = 0; k < 20; k++) g.step(1 / 60);
+    g.release!();
+    for (let k = 0; k < 60; k++) g.step(1 / 60);
+    g.press(0, 0); // can jump again only when grounded
+    expect(g.over).toBe(false);
+  });
+});
+
+describe('gather', () => {
+  it('runs 60 seconds then ends; random swiping scores within the cap (500/s + 50)', () => {
+    const g = createGather(opts);
+    let t = 0;
+    while (!g.over && t < 90) {
+      // swipe a random tile right/down every half second
+      if (Math.round(t * 60) % 30 === 0) {
+        const x = 32 + 24 + Math.floor(Math.random() * 6) * 48, y = 130 + 24 + Math.floor(Math.random() * 7) * 48;
+        g.press(x, y); g.move!(x + (Math.random() < 0.5 ? 30 : 0), y + (Math.random() < 0.5 ? 0 : 30)); g.release!();
+      }
+      g.step(1 / 60); t += 1 / 60;
+    }
+    expect(g.over).toBe(true);
+    expect(t).toBeGreaterThanOrEqual(60);
+    expect(t).toBeLessThan(64);
+    expect(g.score).toBeLessThanOrEqual(500 * t + 50);
+  });
+
+  it('tap-tap on neighbours selects then swaps without crashing', () => {
+    const g = createGather(opts);
+    g.press(56, 154); g.release!();
+    g.press(104, 154); g.release!();
+    for (let k = 0; k < 120; k++) g.step(1 / 60);
+    expect(g.over).toBe(false);
+  });
+});
