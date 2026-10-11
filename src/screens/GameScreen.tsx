@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { syncPet, getWeek, recordGame, leaderboard, type AppState, type Week, type Board, type GameResult } from '../lib/api';
 import { useSession } from '../lib/useSession';
 import { gameInfo } from '../games/catalog';
-import { W, H, type Game } from '../games/engine';
+import { W, H, setStage, type Game } from '../games/engine';
 import Pet from '../pet/Pet';
 import Confetti from '../pet/Confetti';
 
@@ -19,6 +19,16 @@ export default function GameScreen() {
   const [week, setWeek] = useState<Week | null>(null);
   const [over, setOver] = useState<Over | null>(null);
   const [run, setRun] = useState(0);
+  const portraitQuery = typeof window !== 'undefined' ? window.matchMedia('(orientation: portrait)') : null;
+  const [portrait, setPortrait] = useState(!!portraitQuery?.matches);
+  const [playAnyway, setPlayAnyway] = useState(false);
+  useEffect(() => {
+    if (!portraitQuery) return;
+    const on = () => setPortrait(portraitQuery.matches);
+    portraitQuery.addEventListener('change', on);
+    return () => portraitQuery.removeEventListener('change', on);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const needsTurn = !!info?.landscape && portrait && !playAnyway;
 
   useEffect(() => {
     if (!session) return;
@@ -27,7 +37,8 @@ export default function GameScreen() {
 
   useEffect(() => {
     const el = canvas.current;
-    if (!el || !state?.pet || !week || !info || over) return;
+    if (!el || !state?.pet || !week || !info || over || needsTurn) return;
+    setStage(!!info.landscape);
     const ctx = el.getContext('2d')!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     el.width = W * dpr; el.height = H * dpr;
@@ -81,7 +92,7 @@ export default function GameScreen() {
       window.removeEventListener('keydown', key);
       window.removeEventListener('keyup', keyUp);
     };
-  }, [state, week, info, over, run]);
+  }, [state, week, info, over, run, needsTurn]);
 
   if (session === undefined) return null;
   if (!session) return <Navigate to="/" replace />;
@@ -92,12 +103,20 @@ export default function GameScreen() {
   const c = week.content as { keyPhraseRef?: string; phraseMeaning?: string };
 
   return (
-    <div className="game-wrap">
+    <div className={`game-wrap${info.landscape ? ' landscape' : ''}`}>
       <div className="game-head">
         <button className="back" style={{ color: '#fff' }} onClick={() => nav('/play')}>‹ Games</button>
         <span>{info.emoji} {info.name}</span>
       </div>
-      {!over && <canvas ref={canvas} className="game-canvas" />}
+      {!over && needsTurn && (
+        <div className="turn-phone">
+          <div className="turn-icon">📱</div>
+          <h2>Turn your phone sideways</h2>
+          <p>{info.name} plays in landscape so you can see the whole field.</p>
+          <button className="secondary" onClick={() => setPlayAnyway(true)}>Play like this anyway</button>
+        </div>
+      )}
+      {!over && !needsTurn && <canvas ref={canvas} className="game-canvas" />}
       {over && (
         <div className="game-over pop">
           {over.result?.isNewBest && over.score > 0 && <Confetti />}

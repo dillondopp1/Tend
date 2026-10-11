@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createStack } from './stack';
 import { createGlide } from './glide';
 import { createCatch } from './catch';
@@ -114,7 +114,7 @@ describe('gather', () => {
 import { createRun } from './run';
 import { createLaunch } from './launch';
 import { createSlice } from './slice';
-import { Phrase } from './engine';
+import { Phrase, setStage } from './engine';
 
 describe('phrase tracker', () => {
   it('spawns words in order, completes, and starts another round', () => {
@@ -154,11 +154,18 @@ describe('run', () => {
 });
 
 describe('launch', () => {
+  beforeAll(() => setStage(true));
+  afterAll(() => setStage(false));
+
+  it('plays on the landscape stage with the towers far from the sling', () => {
+    expect(W).toBe(800);
+  });
+
   it('a full pull flies, hits or misses, and the game ends when shots run out', () => {
     const g = createLaunch(opts);
     let t = 0, fired = 0;
     while (!g.over && t < 120) {
-      if (Math.round(t * 60) % 240 === 0) { g.press(78, 540); g.move!(20, 560 - Math.random() * 60); g.release!(); fired++; }
+      if (Math.round(t * 60) % 240 === 0) { g.press(96, 294); g.move!(10, 380 - Math.random() * 60); g.release!(); fired++; }
       g.step(1 / 60); t += 1 / 60;
     }
     expect(fired).toBeGreaterThan(2);
@@ -166,9 +173,23 @@ describe('launch', () => {
     expect(g.score).toBeLessThanOrEqual(120 * t + 50);
   });
 
+  it('the far towers are reachable: some full-power angle knocks a block', () => {
+    let hit = false;
+    for (let deg = 15; deg <= 60 && !hit; deg += 3) {
+      for (const pull of [80, 100, 120]) {
+        const g = createLaunch(opts);
+        const a = (deg * Math.PI) / 180;
+        g.press(96, 294); g.move!(96 - Math.cos(a) * pull, 294 + Math.sin(a) * pull); g.release!();
+        for (let k = 0; k < 60 * 5; k++) g.step(1 / 60);
+        if (g.score > 0) { hit = true; break; }
+      }
+    }
+    expect(hit).toBe(true);
+  });
+
   it('a tiny tap does not waste a shot', () => {
     const g = createLaunch(opts);
-    g.press(78, 530); g.move!(80, 532); g.release!();
+    g.press(96, 294); g.move!(98, 296); g.release!();
     for (let k = 0; k < 30; k++) g.step(1 / 60);
     expect(g.over).toBe(false);
   });

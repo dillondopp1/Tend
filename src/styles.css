@@ -139,3 +139,18 @@ textarea { width: 100%; min-height: 140px; font: inherit; font-size: 1.1rem; pad
 .roster-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
 .roster-row .d { color: var(--muted); font-size: .85rem; font-weight: 700; }
 .no-pet { width: 48px; text-align: center; font-size: 1.8rem; }
+
+/* Landscape games (Launch) */
+.game-wrap.landscape .game-canvas { aspect-ratio: 16 / 9; width: min(100vw - 8px, (100dvh - 44px) * 1.7778); }
+.game-wrap.landscape .game-head { padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: 2px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .game-wrap.landscape { justify-content: center; }
+  .game-wrap.landscape .game-head { position: absolute; top: 0; left: 0; right: 0; max-width: none; z-index: 2; pointer-events: none; }
+  .game-wrap.landscape .game-head .back { pointer-events: auto; }
+  .game-wrap.landscape .game-canvas { width: min(100vw - env(safe-area-inset-left) - env(safe-area-inset-right), 100dvh * 1.7778); border-radius: 0; }
+}
+.turn-phone { color: #fff; text-align: center; padding: 15vh 24px 0; max-width: 420px; }
+.turn-phone h2 { font-size: 1.6rem; margin: 12px 0 6px; }
+.turn-phone p { opacity: .8; }
+.turn-icon { font-size: 4rem; display: inline-block; animation: turn 2s ease-in-out infinite; }
+@keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }

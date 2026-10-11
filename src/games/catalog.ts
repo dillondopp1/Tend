@@ -9,11 +9,11 @@ import { createRun } from './run';
 import { createLaunch } from './launch';
 import { createSlice } from './slice';
 
-export interface GameInfo { id: GameId; name: string; emoji: string; blurb: string; create: (o: GameOpts) => Game }
+export interface GameInfo { id: GameId; name: string; emoji: string; blurb: string; create: (o: GameOpts) => Game; landscape?: boolean }
 
 export const GAMES: GameInfo[] = [
   { id: 'run', name: 'Run', emoji: '🏃‍♀️', blurb: 'Swipe to dodge, grab the words', create: createRun },
-  { id: 'launch', name: 'Launch', emoji: '🎯', blurb: 'Sling your pet at the word towers', create: createLaunch },
+  { id: 'launch', name: 'Launch', emoji: '🎯', blurb: 'Sling your pet at the word towers (turn your phone sideways)', create: createLaunch, landscape: true },
   { id: 'slice', name: 'Slice', emoji: '⚔️', blurb: 'Swipe to slice the words', create: createSlice },
   { id: 'glide', name: 'Glide', emoji: '🪽', blurb: 'Tap to flap through the gaps', create: createGlide },
   { id: 'catch', name: 'Catch', emoji: '🧺', blurb: 'Catch the good stuff, dodge the storms', create: createCatch },

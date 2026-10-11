@@ -3,9 +3,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import Pet from '../pet/Pet';
 import type { SpeciesId } from '../domain/species';
 
-/** Logical playfield; the canvas is scaled to fit the phone. */
-export const W = 360;
-export const H = 640;
+/** Logical playfield; the canvas is scaled to fit the phone. Portrait by default; landscape games switch it. */
+export let W = 360;
+export let H = 640;
+export function setStage(landscape: boolean) { W = landscape ? 800 : 360; H = landscape ? 450 : 640; }
 
 export interface Theme { sky: [string, string]; ground: string; block: string[]; ink: string }
 

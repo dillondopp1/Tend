@@ -1,13 +1,15 @@
 import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, hud, motifs, rand, Phrase } from './engine';
 
-// Angry-Birds style: drag your pet back on the slingshot and let go. Knock out every word block
+// Angry-Birds style, played sideways (landscape stage 800x450): the towers stand far across the field.
+// drag your pet back on the slingshot and let go. Knock out every word block
 // (each level spells the whole key phrase) before you run out of shots. Blocks above fall down.
-const GROUND = H - 70, BS = 36, SX = 78, SY = GROUND - 110, R = 22, MAXPULL = 115, POWER = 7.4, GRAV = 620;
+const BS = 36, R = 22, MAXPULL = 120, POWER = 7.4, GRAV = 620;
 interface Block { y: number; vy: number; word?: number; e: string; c: string }
 interface Column { x: number; blocks: Block[] }
 interface Debris { x: number; y: number; vx: number; vy: number; rot: number; vr: number; b: Block }
 
 export function createLaunch(o: GameOpts): Game {
+  const GROUND = H - 56, SX = 96, SY = GROUND - 100;
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
   const phrase = new Phrase(o.phrase, o.phraseRef);
@@ -21,7 +23,7 @@ export function createLaunch(o: GameOpts): Game {
     level++;
     const n = phrase.words.length;
     const nCols = Math.min(3, 2 + Math.floor(level / 2));
-    const xs = Array.from({ length: nCols }, (_, i) => W - 46 - i * 74);
+    const xs = Array.from({ length: nCols }, (_, i) => W - 60 - i * 74);
     cols = xs.map((x) => ({ x, blocks: [] as Block[] }));
     const total = n + Math.min(8, 3 + level * 2);
     for (let k = 0; k < total; k++) {
