@@ -114,7 +114,7 @@ describe('gather', () => {
 import { createRun } from './run';
 import { createLaunch } from './launch';
 import { createSlice } from './slice';
-import { Phrase, setStage } from './engine';
+import { Phrase, setStage, rand } from './engine';
 
 describe('phrase tracker', () => {
   it('spawns words in order, completes, and starts another round', () => {
@@ -185,6 +185,24 @@ describe('launch', () => {
       }
     }
     expect(hit).toBe(true);
+  });
+
+  it('random games with bombs, TNT and mid-air taps never crash and stay under the cap', () => {
+    for (let game = 0; game < 40; game++) {
+      const g = createLaunch(opts);
+      let t = 0, nextShot = 0.5;
+      while (!g.over && t < 400) {
+        if (t >= nextShot) {
+          const a = rand(0.15, 1.1), pull = rand(70, 120);
+          g.press(96, 294); g.move!(96 - Math.cos(a) * pull, 294 + Math.sin(a) * pull); g.release!();
+          nextShot = t + rand(2.5, 4);
+        }
+        if (Math.random() < 0.01) g.press(rand(300, 800), rand(0, 450)); // stray taps (detonate bombs mid-air)
+        g.step(1 / 60); t += 1 / 60;
+      }
+      expect(g.over).toBe(true);
+      expect(g.score).toBeLessThanOrEqual(120 * t + 50);
+    }
   });
 
   it('a tiny tap does not waste a shot', () => {
