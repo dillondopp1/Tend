@@ -44,7 +44,7 @@ Two Edge Functions, using the service role key server-side only:
 
 - **`student-join`** — input: class code, display name, PIN. Validates the class code, checks the display name is unique within the class, creates a Supabase Auth user with a synthetic, non-routable email (`<uuid>@students.tend.invalid`) and a random password nobody knows, stores a bcrypt hash of the PIN in `students`, then signs the student in (below).
 - **`student-login`** — input: class code, display name, PIN. Looks up the student and verifies the PIN against the hash. On success it calls `auth.admin.generateLink({ type: 'magiclink' })` for the synthetic email and returns the `token_hash`; the client calls `supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })` to receive a normal session.
-- **Lockout:** 5 wrong PINs → locked for 15 minutes (`failed_attempts`, `locked_until`). The error message stays friendly and never reveals whether the name exists.
+- **Lockout:** 5 wrong PINs → locked for 15 minutes (`failed_attempts`, `locked_until`); the **third** lockout lasts until the teacher resets the PIN (`lockouts`). Messages stay friendly. Login reveals no more about which names exist than joining already does (join must say "name taken"), so a "too many tries" message for a real name is accepted.
 - Sessions persist on the device, so students normally enter their PIN once.
 - Teachers reset PINs through a third function, **`reset-student-pin`**, which checks that the caller teaches that student's class.
 

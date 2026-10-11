@@ -50,9 +50,15 @@ select pg_temp.act_as(current_setting('t.s')::uuid, current_setting('t.s') || '@
 select throws_ok('select public.ensure_teacher()', '42501', null, 'student cannot become teacher');
 reset role;
 
+-- Escalation: the third lockout needs a teacher reset (stops endless 15-minute guessing cycles)
+select public._login_check(current_setting('t.code'), 'Sam', '0000', '2026-10-12 18:30+00') from generate_series(1, 5);
+select public._login_check(current_setting('t.code'), 'Sam', '0000', '2026-10-12 18:50+00') from generate_series(1, 5);
+select public._login_check(current_setting('t.code'), 'Sam', '0000', '2026-10-12 19:10+00') from generate_series(1, 5);
+select is(public._login_check(current_setting('t.code'), 'Sam', '4321', '2026-10-14 19:10+00')->>'error', 'locked', 'third lockout lasts until a teacher resets');
+
 -- PIN reset
 select is(public._reset_pin(current_setting('t.t')::uuid, current_setting('t.s')::uuid, '9999')->>'ok', 'true', 'teacher resets pin');
-select is(public._login_check(current_setting('t.code'), 'Sam', '9999', '2026-10-12 19:00+00')->>'ok', 'true', 'new pin works');
+select is(public._login_check(current_setting('t.code'), 'Sam', '9999', '2026-10-14 19:11+00')->>'ok', 'true', 'teacher reset clears the lock and new pin works');
 select is(public._reset_pin(gen_random_uuid(), current_setting('t.s')::uuid, '1111')->>'error', 'forbidden', 'other teacher cannot reset');
 
 -- Regenerate code

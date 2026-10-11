@@ -1,8 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select no_plan();
--- Tests own the weeks table for this transaction (rolled back), whatever real content exists.
-truncate public.weeks cascade;
 
 create or replace function pg_temp.mk_class(p_tz text default 'America/Denver') returns uuid language plpgsql as $$
 declare t uuid := gen_random_uuid(); c uuid := gen_random_uuid();
@@ -37,9 +35,17 @@ select set_config('t.stu_a', pg_temp.mk_student(current_setting('t.class_a')::uu
 select set_config('t.stu_b', pg_temp.mk_student(current_setting('t.class_b')::uuid)::text, true);
 select set_config('t.teacher_a', (select teacher_id::text from public.classes where id = current_setting('t.class_a')::uuid), true);
 insert into public.reflections (student_id, date, body) values (current_setting('t.stu_a')::uuid, '2026-10-12', 'private thought');
+-- Hide real weeks inside this rolled-back transaction (row locks only; no truncate on the cloud DB).
+update public.weeks set status = 'draft';
 insert into public.weeks (id, start_date, end_date, title, scripture_block, manual_url, key_phrase, content, status)
 values (41, '2026-10-05', '2026-10-11', 'W41', 'Isaiah 50–57', 'u', 'kp', '{}', 'approved'),
-       (42, '2026-10-12', '2026-10-18', 'W42', 'Isaiah 58–66', 'u', 'kp', '{}', 'draft');
+       (42, '2026-10-12', '2026-10-18', 'W42', 'Isaiah 58–66', 'u', 'kp', '{}', 'draft')
+on conflict (id) do update set start_date = excluded.start_date, end_date = excluded.end_date, status = excluded.status;
+
+-- Tables added by later migrations must not be open to anon, or writable by students, by default.
+create table public._privilege_probe (x int);
+select ok(not has_table_privilege('anon', 'public._privilege_probe', 'SELECT'), 'new tables: anon cannot read by default');
+select ok(not has_table_privilege('authenticated', 'public._privilege_probe', 'INSERT'), 'new tables: students cannot write by default');
 
 -- Student A
 select pg_temp.act_as(current_setting('t.stu_a')::uuid);
@@ -48,7 +54,7 @@ select is((select count(*)::int from public.pets), 1, 'student sees only own pet
 select is((select count(*)::int from public.classes), 1, 'student sees only own class');
 select throws_ok('select pin_hash from public.students', '42501', null, 'student cannot read pin_hash');
 select throws_ok($$update public.streaks set current = 99$$, '42501', null, 'student cannot write streaks directly');
-select is((select count(*)::int from public.weeks), 1, 'student sees approved weeks only');
+select is((select count(*)::int from public.weeks where status = 'approved'), 1, 'student sees approved weeks only');
 select is((select count(*)::int from public.reflections), 1, 'student sees own reflection');
 select throws_ok($$select public._login_check('AAAAAA','x','1234', now())$$, '42501', null,
   'student cannot execute service-only functions');

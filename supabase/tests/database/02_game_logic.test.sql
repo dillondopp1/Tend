@@ -23,12 +23,13 @@ begin
   return s;
 end $$;
 
--- Tests own the weeks table for this transaction (rolled back), whatever real content exists.
-truncate public.weeks cascade;
+-- Hide real weeks inside this rolled-back transaction (row locks only; no truncate on the cloud DB).
+update public.weeks set status = 'draft';
 insert into public.weeks (id, start_date, end_date, title, scripture_block, manual_url, key_phrase, content, status)
 values (41, '2026-10-05', '2026-10-11', 'W41', 'b', 'u', 'kp', '{}', 'approved'),
        (42, '2026-10-12', '2026-10-18', 'W42', 'b', 'u', 'kp', '{}', 'draft'),
-       (52, '2026-12-21', '2026-12-27', 'W52', 'b', 'u', 'kp', '{}', 'approved');
+       (52, '2026-12-21', '2026-12-27', 'W52', 'b', 'u', 'kp', '{}', 'approved')
+on conflict (id) do update set start_date = excluded.start_date, end_date = excluded.end_date, status = excluded.status;
 
 -- Time and weeks
 select is(public._local_date('America/Denver', '2026-10-13 05:30+00'), '2026-10-12'::date, 'timezone: local date');

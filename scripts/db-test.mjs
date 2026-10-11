@@ -7,7 +7,7 @@ import { readdirSync, readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-const dir = 'supabase/tests/database';
+const dir = process.env.TEND_DBTEST_DIR ?? 'supabase/tests/database';
 const only = process.argv[2];
 const files = readdirSync(dir).filter((f) => f.endsWith('.test.sql') && (!only || f.includes(only))).sort();
 const tmp = mkdtempSync(join(tmpdir(), 'tend-dbtest-'));
@@ -17,6 +17,10 @@ let passed = 0;
 for (const f of files) {
   const sql = readFileSync(join(dir, f), 'utf8');
   if (!sql.includes('select * from finish();')) throw new Error(`${f}: missing "select * from finish();"`);
+  // These run against the cloud project: a file must never be able to keep its changes.
+  if (!/^\s*begin;/.test(sql) || !/rollback;\s*$/.test(sql) || /^\s*(commit|end)\s*;/im.test(sql)) {
+    throw new Error(`${f}: must start with "begin;", end with "rollback;" and never commit`);
+  }
   const wrapped = sql
     .replace('select no_plan();',
       'select no_plan();\ncreate temp table _tap (n int generated always as identity, line text);\ngrant all on _tap to public;')
