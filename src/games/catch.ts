@@ -4,7 +4,7 @@ import { W, H, type Game, type GameOpts, themeFor, petImage, sky, word, hud, Phr
 export function createCatch(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   const words = phrase.words;
   const good = motifs(o.motifs);
   const PY = H - 110, PR = 34;

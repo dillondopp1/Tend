@@ -3,7 +3,8 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { syncPet, getWeek, recordGame, leaderboard, type AppState, type Week, type Board, type GameResult } from '../lib/api';
 import { useSession } from '../lib/useSession';
 import { gameInfo } from '../games/catalog';
-import { W, H, setStage, type Game } from '../games/engine';
+import { W, H, setStage, setAmbient, type Game } from '../games/engine';
+import { learningFor } from '../lib/learning';
 import Pet from '../pet/Pet';
 import Confetti from '../pet/Confetti';
 
@@ -42,8 +43,13 @@ export default function GameScreen() {
     const ctx = el.getContext('2d')!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     el.width = W * dpr; el.height = H * dpr;
-    const c = week.content as { theme?: { palette?: string; motifs?: string[] }; gameSparks?: string[]; keyPhraseRef?: string };
-    const g: Game = info.create({ species: state.pet.species, variant: state.pet.colorVariant, palette: c.theme?.palette, motifs: c.theme?.motifs, phrase: week.key_phrase, phraseRef: c.keyPhraseRef });
+    const c = week.content as { theme?: { palette?: string; motifs?: string[] }; gameSparks?: string[] };
+    const learn = learningFor(week, state.today);
+    setAmbient(learn.lines);
+    const g: Game = info.create({
+      species: state.pet.species, variant: state.pet.colorVariant, palette: c.theme?.palette, motifs: c.theme?.motifs,
+      phrase: learn.phrase, phraseRef: learn.ref, phraseMeaning: learn.meaning,
+    });
     let raf = 0, last = performance.now(), startedAt = 0, ended = false;
 
     const toGame = (e: PointerEvent) => {
@@ -70,7 +76,7 @@ export default function GameScreen() {
       if (g.over && !ended) {
         ended = true;
         const duration = performance.now() - startedAt;
-        const lines = c.gameSparks ?? [];
+        const lines = [learn.lines[3], ...(c.gameSparks ?? [])].filter(Boolean) as string[];
         const finish = async () => {
           let result: GameResult | null = null;
           // Runs under a second are too short for the server's plausibility check; show them without saving.
@@ -85,6 +91,7 @@ export default function GameScreen() {
     raf = requestAnimationFrame(frame);
     return () => {
       cancelAnimationFrame(raf);
+      setAmbient([]);
       el.removeEventListener('pointerdown', down);
       el.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
@@ -100,7 +107,7 @@ export default function GameScreen() {
   if (!state || !week) return <main><p className="sub">Loading…</p></main>;
   if (!state.pet) return <Navigate to="/adopt" replace />;
   const pet = state.pet;
-  const c = week.content as { keyPhraseRef?: string; phraseMeaning?: string };
+  const learn = learningFor(week, state.today);
 
   return (
     <div className={`game-wrap${info.landscape ? ' landscape' : ''}`}>
@@ -125,8 +132,14 @@ export default function GameScreen() {
           <p style={{ fontSize: '3.2rem', fontWeight: 900, margin: '0 0 2px' }}>{over.score}</p>
           <p className="sub" style={{ margin: 0 }}>Best ever: {over.result?.personalBest ?? over.board?.personalBest ?? over.score} · {pet.name} +25 Joy 🎈</p>
           {over.phraseDone && <div className="banner" style={{ textAlign: 'left' }}>
-            <b>Phrase complete! “{week.key_phrase}”</b> ({c.keyPhraseRef})<br />{c.phraseMeaning}</div>}
-          {over.line && <div className="card" style={{ fontWeight: 700 }}>✨ {over.line}</div>}
+            <b>Phrase complete! “{learn.phrase}”</b> ({learn.ref})<br />{learn.meaning}</div>}
+          {learn.verse && <div className="card" style={{ textAlign: 'left' }}>
+            <p className="story-kind" style={{ color: 'var(--muted)', margin: '0 0 6px' }}>Today's verse · {learn.ref}</p>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', margin: 0 }}>“{learn.verse}”</p>
+          </div>}
+          {learn.tryText && <div className="card" style={{ textAlign: 'left', background: '#fff3d6' }}>
+            <b>Try this today:</b> {learn.tryText}</div>}
+          {over.line && <p className="sub" style={{ marginTop: 10 }}>✨ {over.line}</p>}
           <button className="warm" onClick={() => { setOver(null); setRun((r) => r + 1); }}>Play again</button>
           {over.board && over.board.top.length > 0 && <div className="card">
             <h2>🏆 This week's class top 10</h2>

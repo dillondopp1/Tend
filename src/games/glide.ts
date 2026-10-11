@@ -4,7 +4,7 @@ import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, wor
 export function createGlide(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   const words = phrase.words;
   const deco = motifs(o.motifs);
   const R = 24, GAP = 170, PW = 64, SPEED = 150;

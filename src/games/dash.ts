@@ -5,7 +5,7 @@ import { W, H, type Game, type GameOpts, themeFor, petImage, sky, word, hud, Phr
 export function createDash(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   const words = phrase.words;
   const deco = motifs(o.motifs);
   const GROUND = H - 120, PX = 80, PS = 70;

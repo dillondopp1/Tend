@@ -9,7 +9,7 @@ const GRAV = 820;
 export function createSlice(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   const good = motifs(o.motifs);
   const items: Item[] = [], halves: Half[] = [], trail: { x: number; y: number; t: number }[] = [];
   const pops: { x: number; y: number; text: string; t: number }[] = [];

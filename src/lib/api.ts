@@ -44,7 +44,7 @@ export type SparkCard =
   | { type: 'hook' | 'meaning' | 'try'; text: string }
   | { type: 'verse'; ref: string; text: string };
 
-export interface DaySpark { day: number; section: string; manualAnchor: string; cards: SparkCard[]; reflectPrompt?: string }
+export interface DaySpark { day: number; section: string; manualAnchor: string; cards: SparkCard[]; reflectPrompt?: string; phrase?: string }
 
 export interface Week {
   id: number; start_date: string; end_date: string; title: string; scripture_block: string; manual_url: string;

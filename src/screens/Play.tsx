@@ -4,6 +4,7 @@ import { syncPet, getWeek, leaderboard, type AppState, type Week, type Board } f
 import { useSession } from '../lib/useSession';
 import { GAMES } from '../games/catalog';
 import { motifs } from '../games/engine';
+import { learningFor } from '../lib/learning';
 
 export default function Play() {
   const nav = useNavigate();
@@ -23,13 +24,15 @@ export default function Play() {
   if (!state) return <main><p className="sub">Loading…</p></main>;
   if (!state.pet) return <Navigate to="/adopt" replace />;
   const theme = (week?.content as { theme?: { motifs?: string[] } } | undefined)?.theme;
+  const learn = week ? learningFor(week, state.today) : null;
 
   return (
     <main>
       <button className="back" onClick={() => nav('/home')}>‹ Home</button>
       <h1>Play with {state.pet.name}</h1>
-      <p className="sub">Every game gives {state.pet.name} +25 Joy 🎈. Collect this week's words:<br />
-        <b style={{ color: 'var(--accent-ink)' }}>“{week?.key_phrase ?? '…'}”</b> {theme && <span>{motifs(theme.motifs).join(' ')}</span>}
+      <p className="sub">Every game gives {state.pet.name} +25 Joy 🎈. Today's words to collect:<br />
+        <b style={{ color: 'var(--accent-ink)' }}>“{learn?.phrase ?? '…'}”</b> <span style={{ whiteSpace: 'nowrap' }}>{learn?.ref}</span> {theme && <span>{motifs(theme.motifs).join(' ')}</span>}
+        <br /><span style={{ fontSize: '.9rem' }}>A new phrase every day!</span>
       </p>
       <div className="days">
         {GAMES.map((g) => {

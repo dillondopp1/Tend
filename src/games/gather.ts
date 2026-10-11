@@ -10,7 +10,7 @@ type Tile = { k: number; word?: number; fall: number; pop: number };
 export function createGather(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   const words = phrase.words;
   const kinds = [...new Set([...motifs(o.motifs), ...EXTRA])].slice(0, 6);
   let grid: (Tile | null)[][] = [];
@@ -146,8 +146,10 @@ export function createGather(o: GameOpts): Game {
         roundRect(ctx, x - CELL / 2 + 3, y - CELL / 2 + 3, CELL - 6, CELL - 6, 12);
         if (tile.word !== undefined) {
           ctx.strokeStyle = '#7c5cff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - CELL / 2 + 3, y - CELL / 2 + 3, CELL - 6, CELL - 6, 12); ctx.stroke();
-          ctx.fillStyle = '#5b3fe0'; ctx.font = '900 11px Nunito, system-ui, sans-serif';
-          ctx.fillText(words[tile.word].slice(0, 7), x, y + 13);
+          ctx.fillStyle = '#5b3fe0';
+          let fs = 11; ctx.font = `900 ${fs}px Nunito, system-ui, sans-serif`;
+          while (ctx.measureText(words[tile.word]).width > CELL - 8 && fs > 7) { fs--; ctx.font = `900 ${fs}px Nunito, system-ui, sans-serif`; }
+          ctx.fillText(words[tile.word], x, y + 13);
           ctx.font = '22px serif'; ctx.fillText(kinds[tile.k], x, y - 5);
         } else { ctx.font = '28px serif'; ctx.fillText(kinds[tile.k], x, y + 1); }
       }

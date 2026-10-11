@@ -4,7 +4,7 @@ import { W, H, type Game, type GameOpts, themeFor, petImage, sky, roundRect, hud
 export function createStack(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   const words = phrase.words;
   const BH = 34, BASE_Y = H - 90;
   type Block = { x: number; w: number; c: string; word?: number };

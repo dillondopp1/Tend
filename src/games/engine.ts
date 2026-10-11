@@ -49,6 +49,41 @@ export function sky(ctx: CanvasRenderingContext2D, t: Theme) {
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, t.sky[0]); g.addColorStop(1, t.sky[1]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  drawAmbient(ctx, t);
+}
+
+/**
+ * Background learning: the day's verse, what it means, the try-this-today and the week's key phrase
+ * fade in and out softly behind the gameplay, one at a time. Never in the way, always there.
+ */
+let ambientLines: string[] = [];
+const AMBIENT_EACH = 8; // seconds per line
+export function setAmbient(lines: string[]) { ambientLines = lines.filter(Boolean); }
+
+export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const out: string[] = []; let line = '';
+  for (const w of text.split(/\s+/)) {
+    const test = line ? `${line} ${w}` : w;
+    if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+export function drawAmbient(ctx: CanvasRenderingContext2D, t: Theme) {
+  if (!ambientLines.length) return;
+  const now = performance.now() / 1000;
+  const k = Math.floor(now / AMBIENT_EACH) % ambientLines.length;
+  const phase = (now % AMBIENT_EACH) / AMBIENT_EACH;               // 0..1 through this line
+  const alpha = Math.sin(Math.PI * phase) ** 0.6 * 0.2;            // soft fade in and out
+  ctx.save();
+  ctx.globalAlpha = alpha; ctx.fillStyle = t.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const size = W > H ? 26 : 22;
+  ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`;
+  const lines = wrapText(ctx, ambientLines[k], W * (W > H ? 0.7 : 0.86)).slice(0, 6);
+  const y0 = H * 0.5 - ((lines.length - 1) * size * 1.25) / 2 - phase * 18;
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, y0 + i * size * 1.25));
+  ctx.restore();
 }
 
 export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -96,7 +131,7 @@ export interface Game {
   phraseDone: boolean;
 }
 
-export interface GameOpts { species: SpeciesId; variant: number; palette?: string; motifs?: string[]; phrase: string; phraseRef?: string }
+export interface GameOpts { species: SpeciesId; variant: number; palette?: string; motifs?: string[]; phrase: string; phraseRef?: string; phraseMeaning?: string }
 
 export function phraseWords(phrase: string): string[] {
   return phrase.split(/\s+/).map((w) => w.replace(/[^\p{L}\p{N}'’-]/gu, '')).filter(Boolean);
@@ -115,7 +150,7 @@ export class Phrase {
   rounds = 0;
   private cursor = 0;
   private celebrate = 0;
-  constructor(phrase: string, readonly ref = '') {
+  constructor(phrase: string, readonly ref = '', readonly meaning = '') {
     this.words = phraseWords(phrase);
     if (!this.words.length) this.words = ['Spark'];
     this.got = this.words.map(() => false);
@@ -169,7 +204,7 @@ export class Phrase {
     if (!this.celebrating) return;
     const a = Math.min(1, this.celebrate / 0.4);
     ctx.save(); ctx.globalAlpha = a;
-    ctx.fillStyle = 'rgba(43,33,64,.72)'; ctx.fillRect(0, H / 2 - 110, W, 220);
+    ctx.fillStyle = 'rgba(43,33,64,.78)'; ctx.fillRect(0, H / 2 - 110, W, 230);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffd23d';
     ctx.font = '900 16px Nunito, system-ui, sans-serif'; ctx.fillText('✨ PHRASE COMPLETE ✨', W / 2, H / 2 - 74);
     ctx.fillStyle = '#ffffff';
@@ -178,8 +213,9 @@ export class Phrase {
     while (ctx.measureText(text).width > W - 30 && size > 18) { size -= 2; ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`; }
     ctx.fillText(text, W / 2, H / 2 - 10);
     if (this.ref) { ctx.font = '800 17px Nunito, system-ui, sans-serif'; ctx.fillStyle = '#ffd23d'; ctx.fillText(this.ref, W / 2, H / 2 + 36); }
-    ctx.font = '800 14px Nunito, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.8)';
-    ctx.fillText('Bonus! Collect it again for more', W / 2, H / 2 + 72);
+    ctx.font = '800 14px Nunito, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)';
+    const note = wrapText(ctx, this.meaning || 'Bonus! Collect it again for more', W - 50).slice(0, 2);
+    note.forEach((l, i) => ctx.fillText(l, W / 2, H / 2 + 66 + i * 18));
     ctx.restore();
   }
 }

@@ -1,4 +1,4 @@
-import { W, H, type Game, type GameOpts, themeFor, petImage, hud, motifs, rand, Phrase, bigWord } from './engine';
+import { W, H, type Game, type GameOpts, themeFor, petImage, hud, motifs, rand, Phrase, bigWord, drawAmbient } from './engine';
 
 // Temple-Run style: three lanes rushing toward you. Swipe left/right to change lane, up to jump,
 // down to slide (or tap the left/right side to change lane). Phrase words fill the track.
@@ -14,7 +14,7 @@ const proj = (lane: number, d: number) => {
 export function createRun(o: GameOpts): Game {
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   const deco = motifs(o.motifs);
   let lane = 0, laneX = 0, jumpT = 0, slideT = 0, speed = 16, dist = 0, bonus = 0, spawnD = 18, flash = 0, crash = 0;
   const things: Thing[] = [];
@@ -105,6 +105,7 @@ export function createRun(o: GameOpts): Game {
       }
       ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2;
       for (const l of [-0.5, 0.5]) { const p = proj(l, FAR), q = proj(l, -1.5); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+      drawAmbient(ctx, t);
       // Side scenery + things, far to near
       const items: { d: number; draw: () => void }[] = [];
       for (const s of sides) items.push({ d: s.d, draw: () => {

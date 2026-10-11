@@ -31,7 +31,7 @@ export function createLaunch(o: GameOpts): Game {
   const GROUND = H - 56, SX = 96, SY = GROUND - 100;
   const t = themeFor(o.palette);
   const pet = petImage(o.species, o.variant);
-  const phrase = new Phrase(o.phrase, o.phraseRef);
+  const phrase = new Phrase(o.phrase, o.phraseRef, o.phraseMeaning);
   let level = 0, cols: Column[] = [], beams: Beam[] = [], ammo: ('pet' | 'bomb')[] = [];
   const debris: Debris[] = [], parts: Particle[] = [], rings: { x: number; y: number; r: number; t: number }[] = [];
   const pending: { x: number; y: number; r: number; t: number }[] = [];
