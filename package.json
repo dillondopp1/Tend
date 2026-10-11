@@ -12,7 +12,7 @@
     "db:test": "node scripts/db-test.mjs",
     "icons": "pwa-assets-generator",
     "db:push": "npx supabase db push --linked",
-    "fn:deploy": "npx supabase functions deploy --use-api"
+    "fn:deploy": "npx supabase functions deploy --use-api --project-ref bucbfxxeewtujszldzsf"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
