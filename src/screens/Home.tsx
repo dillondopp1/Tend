@@ -4,6 +4,7 @@ import { syncPet, completeSpark, type AppState } from '../lib/api';
 import { decayed, moodFor } from '../domain/stats';
 import { useSession, isStudentEmail } from '../lib/useSession';
 import { supabase } from '../lib/supabase';
+import InstallPrompt from '../install/InstallPrompt';
 
 export default function Home() {
   const session = useSession();
@@ -35,6 +36,7 @@ export default function Home() {
 
   return (
     <main>
+      <InstallPrompt />
       <h1>{p.name} the {p.species.replace('_', ' ')}</h1>
       <p>Mood: <b>{moodFor(fed, joy)}</b> · Stage: <b>{p.stage}</b> · Days tended: <b>{p.lifetimeDays}</b></p>
       <div className="card">
