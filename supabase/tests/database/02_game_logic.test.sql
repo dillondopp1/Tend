@@ -23,6 +23,8 @@ begin
   return s;
 end $$;
 
+-- Tests own the weeks table for this transaction (rolled back), whatever real content exists.
+truncate public.weeks cascade;
 insert into public.weeks (id, start_date, end_date, title, scripture_block, manual_url, key_phrase, content, status)
 values (41, '2026-10-05', '2026-10-11', 'W41', 'b', 'u', 'kp', '{}', 'approved'),
        (42, '2026-10-12', '2026-10-18', 'W42', 'b', 'u', 'kp', '{}', 'draft'),

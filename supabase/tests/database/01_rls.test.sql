@@ -1,6 +1,8 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select no_plan();
+-- Tests own the weeks table for this transaction (rolled back), whatever real content exists.
+truncate public.weeks cascade;
 
 create or replace function pg_temp.mk_class(p_tz text default 'America/Denver') returns uuid language plpgsql as $$
 declare t uuid := gen_random_uuid(); c uuid := gen_random_uuid();
