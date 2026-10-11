@@ -6,3 +6,9 @@ values (42, '2026-10-12', '2026-10-18', '[DEV PLACEHOLDER] Week 42', 'Isaiah 58â
         'https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/42?lang=eng',
         'placeholder', '{}'::jsonb, 'approved', now())
 on conflict (id) do nothing;
+
+insert into public.weeks (id, start_date, end_date, title, scripture_block, manual_url, key_phrase, content, status, approved_at)
+values (41, '2026-10-05', '2026-10-11', '[DEV PLACEHOLDER] Week 41', 'Isaiah 50â€“57',
+        'https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/41?lang=eng',
+        'placeholder', '{}'::jsonb, 'approved', now())
+on conflict (id) do nothing;
