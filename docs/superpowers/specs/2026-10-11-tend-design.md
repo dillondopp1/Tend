@@ -22,7 +22,7 @@ Multiple teachers and classes are supported. All classes share the same weekly c
 ## 3. Platform and stack
 
 - **Front end:** React + TypeScript + Vite, built as a **Progressive Web App** (vite-plugin-pwa): web app manifest, icons, offline-cached shell, full-screen standalone display.
-- **Back end:** Supabase (Postgres, Auth, Row Level Security, Edge Functions). Lives in Dillon's separate Supabase account — project not yet connected (see §14).
+- **Back end:** Supabase (Postgres, Auth, Row Level Security, Edge Functions). **Development runs fully local** via the Supabase CLI (`npx supabase start`, Docker). All schema lives in `supabase/migrations/`, functions in `supabase/functions/`. At launch the same migrations/functions are pushed to Dillon's separate Supabase cloud project (`supabase link` + `db push` + `functions deploy`); the front end switches by env vars only.
 - **Hosting:** Netlify.
 - **Games:** HTML5 canvas, written in-house, no game engine dependency.
 - **Art:** All pets, motifs and game sprites are hand-built SVG in the codebase. No licensed art.
@@ -250,5 +250,5 @@ Five games run on canvas at 60 fps and are tuned for a quick "one more try" loop
 
 - **Push notification reminders:** a strong follow-up, but not v1.
 - **2027 content:** a new manual year. Decide in December.
-- **Supabase account:** the Supabase connector is currently signed into the `tetonvault` account. Before building, either reconnect it to the new account or provide the new project's URL, publishable key and service role key (the service key goes into Edge Function secrets only, never the front end).
+- **Supabase cloud account (needed at launch only):** the Supabase connector is signed into the `tetonvault` account; nothing for Tend is created there. At launch, link the CLI to Dillon's new project (service role key stays in Edge Function secrets, never the front end).
 - **Domain:** a Netlify subdomain for now; a custom domain is optional later.
