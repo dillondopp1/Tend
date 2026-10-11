@@ -9,9 +9,10 @@
     "preview": "vite preview",
     "test": "vitest run --dir src",
     "test:int": "vitest run --dir tests/integration",
-    "db:test": "npx supabase test db",
-    "env": "node scripts/write-env.mjs",
-    "icons": "pwa-assets-generator"
+    "db:test": "npx supabase test db --linked",
+    "icons": "pwa-assets-generator",
+    "db:push": "npx supabase db push --linked",
+    "fn:deploy": "npx supabase functions deploy --use-api"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
