@@ -1,4 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
+import { isPreviewHost } from './lib/preview';
+import Quiz from './screens/Quiz';
+import Shop from './screens/Shop';
 import Welcome from './screens/Welcome';
 import Join from './screens/Join';
 import Login from './screens/Login';
@@ -14,6 +17,7 @@ import TeacherHome from './screens/teacher/TeacherHome';
 export default function App() {
   return (
     <BrowserRouter>
+      {isPreviewHost(location.hostname) && <div className="preview-badge">PREVIEW · not live</div>}
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/join" element={<Join />} />
@@ -22,6 +26,8 @@ export default function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/spark/:date" element={<Spark />} />
         <Route path="/week" element={<WeekList />} />
+        <Route path="/quiz" element={<Quiz />} />
+        <Route path="/shop" element={<Shop />} />
         <Route path="/play" element={<Play />} />
         <Route path="/play/:game" element={<GameScreen />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />
