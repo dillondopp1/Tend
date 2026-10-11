@@ -64,7 +64,7 @@ export function createStack(o: GameOpts): Game {
       ctx.drawImage(pet, top.x + top.w / 2 - ps / 2, topY - ps + 8 - (g.started && !g.over ? BH : 0), ps, ps);
       ctx.restore();
       hud(ctx, g.score, t, !g.started ? 'Tap to drop each block. Stack it high!' : perfect > 0 ? 'Perfect! ✨' : undefined);
-      phrase.drawBanner(ctx, 108);
+      phrase.drawBanner(ctx, 100);
       phrase.drawCelebration(ctx);
 
       function drawBlock(c: CanvasRenderingContext2D, b: Block, y: number) {

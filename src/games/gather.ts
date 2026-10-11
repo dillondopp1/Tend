@@ -161,7 +161,7 @@ export function createGather(o: GameOpts): Game {
       ctx.drawImage(pet, W / 2 - 30, by + (flash > 0 ? -8 : 0), 60, 60);
       if (toastT > 0) { ctx.fillStyle = '#5b3fe0'; ctx.font = '900 20px Nunito, system-ui, sans-serif'; ctx.fillText(toast, W / 2, by + 74); }
       hud(ctx, g.score, t, g.started ? `${Math.ceil(left)}s` : 'Swipe a tile to swap. Match 3!');
-      phrase.drawBanner(ctx, 108);
+      phrase.drawBanner(ctx, 100);
       phrase.drawCelebration(ctx);
     },
   };

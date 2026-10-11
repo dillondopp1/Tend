@@ -80,8 +80,10 @@ export function createSlice(o: GameOpts): Game {
       sky(ctx, t);
       ctx.drawImage(pet, W / 2 - 45, H - 120 + (cheer > 0 ? -Math.abs(Math.sin(cheer * 12)) * 16 : 0), 90, 90);
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      for (const it of items) {
-        if (it.kind === 'word') bigWord(ctx, phrase.words[it.w!], it.x, it.y, 1.15);
+      // Words first, then fruit, then storms on top: a big word can never hide a storm.
+      const order = { word: 0, good: 1, storm: 2 } as const;
+      for (const it of [...items].sort((a, b) => order[a.kind] - order[b.kind])) {
+        if (it.kind === 'word') bigWord(ctx, phrase.words[it.w!], it.x, it.y, 1.05);
         else { ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(it.rot); ctx.font = '54px serif'; ctx.fillText(it.e!, 0, 0); ctx.restore(); }
       }
       for (const h of halves) {
@@ -102,7 +104,7 @@ export function createSlice(o: GameOpts): Game {
       ctx.globalAlpha = 1;
       if (hurt > 0) { ctx.fillStyle = `rgba(255,80,80,${hurt * 0.4})`; ctx.fillRect(0, 0, W, H); }
       hud(ctx, g.score, t, g.started ? '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(3 - Math.max(0, lives)) : 'Swipe to slice the words! Skip the ⛈️');
-      phrase.drawBanner(ctx, 108);
+      phrase.drawBanner(ctx, 100);
       phrase.drawCelebration(ctx);
     },
   };

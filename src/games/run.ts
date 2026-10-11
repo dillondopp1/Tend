@@ -1,4 +1,4 @@
-import { W, H, type Game, type GameOpts, themeFor, petImage, hud, motifs, rand, Phrase, bigWord, drawAmbient } from './engine';
+import { W, H, type Game, type GameOpts, themeFor, petImage, hud, motifs, rand, Phrase, bigWord } from './engine';
 
 // Temple-Run style: three lanes rushing toward you. Swipe left/right to change lane, up to jump,
 // down to slide (or tap the left/right side to change lane). Phrase words fill the track.
@@ -105,7 +105,6 @@ export function createRun(o: GameOpts): Game {
       }
       ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2;
       for (const l of [-0.5, 0.5]) { const p = proj(l, FAR), q = proj(l, -1.5); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
-      drawAmbient(ctx, t);
       // Side scenery + things, far to near
       const items: { d: number; draw: () => void }[] = [];
       for (const s of sides) items.push({ d: s.d, draw: () => {
@@ -122,7 +121,7 @@ export function createRun(o: GameOpts): Game {
       if (flash > 0) { ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = 30; }
       ctx.drawImage(pet, -size / 2, -size * sq, size, size * sq); ctx.restore();
       hud(ctx, g.score, t, g.started ? undefined : 'Swipe ← → to switch lanes, ↑ jump, ↓ slide');
-      phrase.drawBanner(ctx, 108);
+      phrase.drawBanner(ctx, 100);
       phrase.drawCelebration(ctx);
 
       function drawThing(c: CanvasRenderingContext2D, th: Thing) {

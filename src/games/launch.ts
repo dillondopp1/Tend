@@ -269,12 +269,12 @@ export function createLaunch(o: GameOpts): Game {
       // Ammo left
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '22px serif';
       ammo.slice(pp && !ball ? 1 : 0).forEach((a, k) => {
-        if (a === 'bomb') ctx.fillText('💣', 24 + k * 30, GROUND + 28);
-        else ctx.drawImage(pet, 9 + k * 30, GROUND + 13, 30, 30);
+        if (a === 'bomb') ctx.fillText('💣', 24 + k * 30, GROUND + 15);
+        else ctx.drawImage(pet, 11 + k * 30, GROUND + 3, 26, 26);
       });
       ctx.restore();
       hud(ctx, g.score, t, g.started ? undefined : 'Pull your pet back and let go!');
-      phrase.drawBanner(ctx, 108);
+      phrase.drawBanner(ctx, 100);
       if (toastT > 0) { ctx.textAlign = 'center'; ctx.fillStyle = t.ink; ctx.font = '900 22px Nunito, system-ui, sans-serif'; ctx.fillText(toast, W / 2, 170); }
       phrase.drawCelebration(ctx);
 

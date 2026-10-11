@@ -78,7 +78,7 @@ export function createDash(o: GameOpts): Game {
       if (flash > 0) { ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = 30; }
       ctx.drawImage(pet, -PS / 2 * sx - 6, -PS * sy - 4, PS * sx + 12, PS * sy + 12); ctx.restore();
       hud(ctx, g.score, t, g.started ? undefined : 'Tap to jump. Hold for a big jump!');
-      phrase.drawBanner(ctx, 108);
+      phrase.drawBanner(ctx, 100);
       phrase.drawCelebration(ctx);
     },
   };

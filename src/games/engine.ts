@@ -49,15 +49,14 @@ export function sky(ctx: CanvasRenderingContext2D, t: Theme) {
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, t.sky[0]); g.addColorStop(1, t.sky[1]);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  drawAmbient(ctx, t);
 }
 
 /**
  * Background learning: the day's verse, what it means, the try-this-today and the week's key phrase
- * fade in and out softly behind the gameplay, one at a time. Never in the way, always there.
+ * scroll slowly through a slim ticker along the bottom edge, outside the playfield, so it is always
+ * there but never in the way of the game.
  */
 let ambientLines: string[] = [];
-const AMBIENT_EACH = 8; // seconds per line
 export function setAmbient(lines: string[]) { ambientLines = lines.filter(Boolean); }
 
 export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
@@ -69,20 +68,19 @@ export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: numb
   if (line) out.push(line);
   return out;
 }
-
-export function drawAmbient(ctx: CanvasRenderingContext2D, t: Theme) {
+const TICKER_H = 24, TICKER_SPEED = 42;
+let tickerText = '', tickerW = 0;
+export function drawTicker(ctx: CanvasRenderingContext2D) {
   if (!ambientLines.length) return;
-  const now = performance.now() / 1000;
-  const k = Math.floor(now / AMBIENT_EACH) % ambientLines.length;
-  const phase = (now % AMBIENT_EACH) / AMBIENT_EACH;               // 0..1 through this line
-  const alpha = Math.sin(Math.PI * phase) ** 0.6 * 0.2;            // soft fade in and out
   ctx.save();
-  ctx.globalAlpha = alpha; ctx.fillStyle = t.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const size = W > H ? 26 : 22;
-  ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`;
-  const lines = wrapText(ctx, ambientLines[k], W * (W > H ? 0.7 : 0.86)).slice(0, 6);
-  const y0 = H * 0.5 - ((lines.length - 1) * size * 1.25) / 2 - phase * 18;
-  lines.forEach((l, i) => ctx.fillText(l, W / 2, y0 + i * size * 1.25));
+  ctx.font = '800 13px Nunito, system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  const text = ambientLines.join('      ✦      ') + '      ✦      ';
+  if (text !== tickerText) { tickerText = text; tickerW = ctx.measureText(text).width; }
+  const y = H - TICKER_H;
+  ctx.fillStyle = 'rgba(43,33,64,.62)'; ctx.fillRect(0, y, W, TICKER_H);
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  const off = ((performance.now() / 1000) * TICKER_SPEED) % tickerW;
+  for (let x = -off; x < W; x += tickerW) ctx.fillText(text, x, y + TICKER_H / 2 + 1);
   ctx.restore();
 }
 
@@ -175,28 +173,31 @@ export class Phrase {
   step(dt: number) { this.celebrate = Math.max(0, this.celebrate - dt); }
   get celebrating() { return this.celebrate > 0; }
 
-  /** Banner with the whole phrase near the top; collected words glow. */
+  /** Compact banner with the whole phrase + reference near the top; collected words glow. */
   drawBanner(ctx: CanvasRenderingContext2D, y = 92) {
     ctx.save();
-    ctx.font = '900 19px Nunito, system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    const gap = 8;
+    ctx.font = '900 15px Nunito, system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const gap = 6;
     const widths = this.words.map((w) => ctx.measureText(w).width);
-    const total = widths.reduce((a, b) => a + b + gap, -gap);
-    const scale = Math.min(1, (W - 40) / total);
+    const refText = this.ref ? `  ${this.ref}${this.rounds ? ` ✨${this.rounds}` : ''}` : '';
+    ctx.font = '800 11px Nunito, system-ui, sans-serif';
+    const refW = ctx.measureText(refText).width;
+    const total = widths.reduce((a, b) => a + b + gap, -gap) + refW;
+    const scale = Math.min(1, (W - 30) / (total + 24));
     ctx.translate(W / 2, y); ctx.scale(scale, scale);
-    ctx.fillStyle = 'rgba(43,33,64,.55)';
-    ctx.beginPath(); ctx.roundRect(-total / 2 - 14, -17, total + 28, 34, 17); ctx.fill();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = 'rgba(43,33,64,.5)';
+    ctx.beginPath(); ctx.roundRect(-total / 2 - 12, -13, total + 24, 26, 13); ctx.fill();
     let x = -total / 2;
+    ctx.font = '900 15px Nunito, system-ui, sans-serif';
     this.words.forEach((w, i) => {
-      ctx.fillStyle = this.got[i] ? '#ffd23d' : 'rgba(255,255,255,.55)';
-      if (this.got[i]) { ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = 12; } else ctx.shadowBlur = 0;
+      ctx.fillStyle = this.got[i] ? '#ffd23d' : 'rgba(255,255,255,.6)';
+      ctx.shadowColor = '#ffd23d'; ctx.shadowBlur = this.got[i] ? 10 : 0;
       ctx.fillText(w, x, 1); x += widths[i] + gap;
     });
+    ctx.shadowBlur = 0;
+    if (refText) { ctx.font = '800 11px Nunito, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText(refText, x - gap, 1); }
     ctx.restore();
-    if (this.ref) {
-      ctx.font = '800 12px Nunito, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(43,33,64,.7)';
-      ctx.fillText(this.ref + (this.rounds ? `  ·  ✨ x${this.rounds}` : ''), W / 2, y + 26);
-    }
   }
 
   /** Full-screen moment when the phrase is completed. */

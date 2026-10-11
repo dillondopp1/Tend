@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { syncPet, getWeek, recordGame, leaderboard, type AppState, type Week, type Board, type GameResult } from '../lib/api';
 import { useSession } from '../lib/useSession';
 import { gameInfo } from '../games/catalog';
-import { W, H, setStage, setAmbient, type Game } from '../games/engine';
+import { W, H, setStage, setAmbient, drawTicker, type Game } from '../games/engine';
 import { learningFor } from '../lib/learning';
 import Pet from '../pet/Pet';
 import Confetti from '../pet/Confetti';
@@ -73,6 +73,7 @@ export default function GameScreen() {
       g.step(dt);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.draw(ctx);
+      drawTicker(ctx);
       if (g.over && !ended) {
         ended = true;
         const duration = performance.now() - startedAt;
