@@ -1,0 +1,7 @@
+node_modules
+dist
+dev-dist
+.env*.local
+supabase/.temp
+supabase/.branches
+.superpowers
