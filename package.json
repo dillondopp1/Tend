@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run --dir src",
     "test:int": "vitest run --dir tests/integration",
-    "db:test": "npx supabase test db --linked",
+    "db:test": "node scripts/db-test.mjs",
     "icons": "pwa-assets-generator",
     "db:push": "npx supabase db push --linked",
     "fn:deploy": "npx supabase functions deploy --use-api"
