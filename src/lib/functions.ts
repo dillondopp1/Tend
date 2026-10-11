@@ -29,7 +29,7 @@ export async function callFunction<T>(
 
 export async function studentSession(
   client: SupabaseClient, baseUrl: string, anonKey: string,
-  kind: 'student-join' | 'student-login', body: { code: string; name: string; pin: string },
+  kind: 'student-join' | 'student-login' | 'teacher-login', body: Record<string, string>,
 ): Promise<FnResult<null>> {
   const r = await callFunction<{ tokenHash: string }>(baseUrl, anonKey, kind, body);
   if (!r.ok) return r;

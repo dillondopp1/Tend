@@ -35,6 +35,7 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 export const syncPet = () => rpc<AppState>('sync_pet');
 export const adoptPet = (species: SpeciesId, color: number, name: string) =>
   rpc<AppState>('adopt_pet', { p_species: species, p_color: color, p_name: name });
+export const recolorPet = (color: number) => rpc<null>('recolor_pet', { p_color: color });
 export const completeSpark = (date: string) => rpc<SparkResult>('complete_spark', { p_date: date });
 export const recordGame = (game: GameId, score: number, durationMs: number) =>
   rpc<GameResult>('record_game', { p_game: game, p_score: score, p_duration_ms: Math.round(durationMs) });

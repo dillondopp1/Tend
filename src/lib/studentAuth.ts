@@ -6,3 +6,6 @@ export const joinClass = (code: string, name: string, pin: string) =>
 
 export const signInStudent = (code: string, name: string, pin: string) =>
   studentSession(supabase, SUPABASE_URL, SUPABASE_ANON_KEY, 'student-login', { code, name, pin });
+
+export const signInTeacher = (email: string, pin: string) =>
+  studentSession(supabase, SUPABASE_URL, SUPABASE_ANON_KEY, 'teacher-login', { email, pin });

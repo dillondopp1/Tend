@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router';
-import { syncPet, getWeek, type AppState, type Week } from '../lib/api';
+import { syncPet, getWeek, recolorPet, type AppState, type Week } from '../lib/api';
 import { decayed, moodFor, type Mood } from '../domain/stats';
 import { nextStage } from '../domain/growth';
 import { useSession, isStudentEmail } from '../lib/useSession';
 import { supabase } from '../lib/supabase';
 import InstallPrompt from '../install/InstallPrompt';
-import Pet from '../pet/Pet';
+import Pet, { COLOR_NAMES, swatch } from '../pet/Pet';
 
 const MOOD_TEXT: Record<Mood, string> = {
   thriving: 'is thriving! ✨', content: 'is feeling good', sleepy: 'is a little sleepy', 'misses-you': 'misses you! 💜',
@@ -18,6 +18,7 @@ export default function Home() {
   const [week, setWeek] = useState<Week | null>(null);
   const [failed, setFailed] = useState(false);
   const [now, setNow] = useState(new Date());
+  const [painting, setPainting] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -56,6 +57,18 @@ export default function Home() {
       <div className="pet-stage"><Pet species={p.species} variant={p.colorVariant} mood={mood} stage={p.stage} size={250} /></div>
       <p className="pet-name">{p.name}</p>
       <p className="pet-meta">{p.name} {MOOD_TEXT[mood]}</p>
+      {painting ? <div className="card pop">
+        <div className="swatches">
+          {COLOR_NAMES.map((n, i) => {
+            const [a, b] = swatch(p.species, i);
+            return <button key={n} type="button" aria-label={n} className={`swatch ${p.colorVariant === i ? 'on' : ''}`}
+              style={{ background: `linear-gradient(135deg, ${a} 55%, ${b} 55%)` }}
+              onClick={() => { setState({ ...state, pet: { ...p, colorVariant: i } }); recolorPet(i).catch(() => {}); }} />;
+          })}
+        </div>
+        <p className="center sub" style={{ margin: 0 }}>{COLOR_NAMES[p.colorVariant]}</p>
+        <button className="secondary" onClick={() => setPainting(false)}>Done</button>
+      </div> : <p className="center" style={{ margin: 0 }}><button className="ghost" style={{ width: 'auto', margin: 0, padding: 4 }} onClick={() => setPainting(true)}>🎨 Change color</button></p>}
 
       <div className="card">
         <div className="stat"><span>🍎 Fed</span><div className="bar fed"><span style={{ width: `${fed}%` }} /></div></div>

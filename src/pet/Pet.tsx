@@ -24,10 +24,22 @@ const PALETTES: Record<SpeciesId, [Palette, Palette, Palette]> = {
   koala:     [['#a9adb8', '#eef0f4', '#3a3a46'], ['#c9c0d8', '#f4f0fa', '#4a4058'], ['#7a7f8e', '#d8dbe3', '#24242e']],
 };
 
-export const COLOR_NAMES = ['Classic', 'Pastel', 'Midnight'];
+// Five more colours shared by every animal; markings/details keep the species' classic accent.
+const DYES: { name: string; body: string; belly: string }[] = [
+  { name: 'Mint', body: '#8fe3c4', belly: '#effcf6' },
+  { name: 'Sky', body: '#8cc8ff', belly: '#eef7ff' },
+  { name: 'Lavender', body: '#c3a6ff', belly: '#f5efff' },
+  { name: 'Rose', body: '#ff9ebb', belly: '#fff0f5' },
+  { name: 'Sunny', body: '#ffd45c', belly: '#fff8e1' },
+];
 
-export function swatch(species: SpeciesId, variant: number) {
-  return PALETTES[species][variant] ?? PALETTES[species][0];
+export const COLOR_NAMES = ['Classic', 'Pastel', 'Midnight', ...DYES.map((d) => d.name)];
+
+export function swatch(species: SpeciesId, variant: number): Palette {
+  const own = PALETTES[species];
+  if (variant < own.length) return own[variant];
+  const d = DYES[variant - own.length];
+  return d ? [d.body, d.belly, own[0][2]] : own[0];
 }
 
 const STAGE_SCALE: Record<Stage, number> = { hatchling: 0.72, little: 0.82, young: 0.9, grown: 1, legendary: 1 };
