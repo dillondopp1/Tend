@@ -24,7 +24,8 @@ export default function GameShowPhone() {
         syncPet().catch(() => null),
       ]);
       if (!st) return setMe(null);
-      setMe({ id: session.user.id, name: st.display_name, species: app?.pet?.species ?? 'fox', color: app?.pet?.colorVariant ?? 0, classId: st.class_id });
+      // The class sees the animal's name, not the kid's own.
+      setMe({ id: session.user.id, name: app?.pet?.name ?? st.display_name, species: app?.pet?.species ?? 'fox', color: app?.pet?.colorVariant ?? 0, classId: st.class_id });
     })().catch(() => setMe(null));
   }, [session]);
 
