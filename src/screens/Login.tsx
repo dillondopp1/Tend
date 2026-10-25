@@ -27,7 +27,7 @@ export default function Login() {
       <p className="sub">Your pet missed you.</p>
       <form onSubmit={submit}>
         <label>Class code</label>
-        <input className="code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} maxLength={6} autoCapitalize="characters" autoComplete="off" required />
+        <input className="code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} maxLength={12} autoCapitalize="characters" autoComplete="off" required />
         <label>Your name</label>
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={24} required />
         <label>PIN</label>
