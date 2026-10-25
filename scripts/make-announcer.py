@@ -8,7 +8,7 @@ VOICE, RATE, PITCH = 'en-US-GuyNeural', '+8%', '+4Hz'
 
 src = (pathlib.Path(__file__).resolve().parent.parent / 'src' / 'gameshow' / 'rounds.ts').read_text(encoding='utf-8')
 rounds = re.findall(r"title: '(.*?)', setup: '(.*?)',\s*ask: '(.*?)', vote:", src)
-spoken = lambda t: t.replace(chr(92) + "'", "'").replace('🙂', 'smiley face').replace('1 a.m.', 'one A M')
+spoken = lambda t: t.replace(chr(92) + "'", "'").replace('🙂', 'smiley face').replace('1 a.m.', 'one A M').replace('a.m.', 'A M')
 
 LINES = {
   'welcome': "Ladies and gentlemen, boys and girls, welcome to... the Gospel Game Show! Tonight, everybody plays. Everybody's answers count. And nobody has to be perfect. Let's get started!",
@@ -17,6 +17,7 @@ LINES = {
   'reveal': "Votes are locked! Let's see who said what.",
   'hurry': "Ten seconds left!",
   'allin': "Everyone's in! Nicely done.",
+  'fun': "Alright! The serious part is done. Time for some bonus rounds, just for fun!",
   'finale': "And that's the show! Thank you for being honest tonight. Keep thinking about these. You're the best audience in the world.",
 }
 for i, (t, s, a) in enumerate(rounds, 1):
@@ -24,7 +25,9 @@ for i, (t, s, a) in enumerate(rounds, 1):
 
 async def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    import sys
     for k, t in LINES.items():
+        if (OUT / f'{k}.mp3').exists() and '--force' not in sys.argv: continue  # only record what's missing
         await edge_tts.Communicate(t, VOICE, rate=RATE, pitch=PITCH).save(str(OUT / f'{k}.mp3'))
         print(k)
 asyncio.run(main())

@@ -5,6 +5,8 @@ export interface Round {
   ask: string;
   vote: string; // what to vote for
   lens?: { ref: string; text: string };
+  /** Lighter bonus rounds after the main set: no verse, vote for the funniest. */
+  fun?: boolean;
 }
 
 export const ROUNDS: Round[] = [
@@ -31,6 +33,18 @@ export const ROUNDS: Round[] = [
     lens: { ref: 'Jeremiah 2:13', text: 'They have forsaken me the fountain of living waters, and hewed them out cisterns, broken cisterns, that can hold no water.' } },
   { id: 8, title: 'The fun one', setup: 'Your family group chat is still called "Family 🙂".',
     ask: 'Type the name it would have if it told the truth.', vote: 'Vote for the funniest one.' },
+  { id: 9, fun: true, title: 'Your pet talks', setup: 'Your Tend pet gets to talk for exactly one day, and it has been watching you closely.',
+    ask: 'Type what it says about you.', vote: 'Vote for the funniest one.' },
+  { id: 10, fun: true, title: 'Sunday, 8:40 a.m.', setup: 'You leave for church in five minutes, and the whole house is in chaos.',
+    ask: 'Type the sentence somebody yells.', vote: 'Vote for the funniest one.' },
+  { id: 11, fun: true, title: 'The potluck movie', setup: 'A big-budget movie gets made about the most chaotic ward potluck of all time.',
+    ask: 'Type the movie title.', vote: 'Vote for the funniest one.' },
+  { id: 12, fun: true, title: 'The opening line', setup: 'You have five minutes to give a talk in sacrament meeting, and you want a dramatic start.',
+    ask: 'Type the first sentence.', vote: 'Vote for the funniest one.' },
+  { id: 13, fun: true, title: 'Fast ends', setup: 'Fast Sunday is finally over, the clock just hit the minute, and you have not eaten in a long time.',
+    ask: 'Type the first thing you eat.', vote: 'Vote for the funniest one.' },
+  { id: 14, fun: true, title: 'One new rule', setup: 'You get to add exactly one new rule to Sundays, and everyone has to follow it.',
+    ask: 'Type the rule.', vote: 'Vote for the funniest one.' },
 ];
 
 export const MAX_ANSWER = 140;

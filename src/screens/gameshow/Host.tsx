@@ -71,8 +71,10 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     const s = ref.current;
     if (s === before) return;
     const r = s.round + 1;
-    if (step === 'start') ann.current.say(['welcome', `r${r}`], () => introDone(s.round));
-    else if (step === 'next') s.phase === 'finale' ? ann.current.say('finale') : ann.current.say(`r${r}`, () => introDone(s.round));
+    const lead = ROUNDS[s.round]?.fun && !ROUNDS[s.round - 1]?.fun ? ['fun', `r${r}`] : [`r${r}`];
+    if (step === 'finish') ann.current.say('finale');
+    else if (step === 'start') ann.current.say(['welcome', `r${r}`], () => introDone(s.round));
+    else if (step === 'next') s.phase === 'finale' ? ann.current.say('finale') : ann.current.say(lead, () => introDone(s.round));
     else if (before.phase === 'intro') ann.current.say('write');
     else if (s.phase === 'voting') ann.current.say('vote');
     else if (s.phase === 'reveal') ann.current.say('reveal');
@@ -96,6 +98,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
       else if (m.t === 'remote') publish();
       else if (m.t === 'cmd') {
         if (m.cmd === 'next') { const st = nextStep(ref.current); if (st) go(st); }
+        else if (m.cmd === 'finish') go('finish');
         else if (m.cmd === 'mute') toggleMute();
         else if (m.cmd === 'restart') restart();
         else if (m.cmd === 'remove' && m.aid) { const aid = m.aid; update((x) => removeAnswer(x, aid)); }
@@ -165,7 +168,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
 
       {(s.phase === 'intro' || s.phase === 'writing') && (
         <div className="gs-center">
-          <div className="gs-tag">ROUND {s.round + 1} OF {ROUNDS.length} · {round.title.toUpperCase()}</div>
+          <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {s.round + 1} OF {ROUNDS.length} · {round.title.toUpperCase()}</div>
           <p className="gs-setup">{round.setup}</p>
           <p className="gs-ask">{round.ask}</p>
           {s.phase === 'writing' && <p className="gs-sub">{pub.doneCount} of {s.players.length} answers in. Type on your phone.</p>}
@@ -217,6 +220,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
       <div className="gs-controls">
         <button className="gs-mini" onClick={toggleMute}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
         {next && <button className={`gs-go ${s.phase === 'lobby' || s.phase === 'reveal' ? 'main' : ''}`} onClick={() => go(next.step)}>{next.label} ▸</button>}
+        {s.phase !== 'lobby' && s.phase !== 'finale' && <button className="gs-mini" onClick={() => go('finish')}>⏹ End show</button>}
         {s.phase !== 'lobby' && <button className="gs-mini" onClick={() => { if (confirm('Start the whole show over?')) restart(); }}>↺ Restart</button>}
       </div>
     </div>

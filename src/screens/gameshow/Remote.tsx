@@ -47,7 +47,7 @@ function Remote({ classId }: { classId: string }) {
     return () => { clearInterval(hb); clearInterval(tick); document.removeEventListener('visibilitychange', again); w.close(); };
   }, [classId]);
 
-  const cmd = (c: 'next' | 'mute' | 'restart' | 'remove', aid?: string) => wire.current?.sendToHost({ t: 'cmd', cmd: c, aid });
+  const cmd = (c: 'next' | 'finish' | 'mute' | 'restart' | 'remove', aid?: string) => wire.current?.sendToHost({ t: 'cmd', cmd: c, aid });
   const round = st ? ROUNDS[st.round] : null;
   const left = st?.left != null ? Math.max(0, st.left - Math.floor((now - gotAt) / 1000)) : null;
   const stale = st ? now - gotAt > 9000 : false;
@@ -59,7 +59,7 @@ function Remote({ classId }: { classId: string }) {
       {stale && <p className="gs-sub">Lost the laptop. Is it still on and online?</p>}
       {st && (
         <>
-          <div className="gs-tag">{st.phase === 'lobby' ? 'LOBBY' : st.phase === 'finale' ? 'FINISHED' : `ROUND ${st.round + 1} OF ${ROUNDS.length} · ${round?.title.toUpperCase()}`}</div>
+          <div className="gs-tag">{st.phase === 'lobby' ? 'LOBBY' : st.phase === 'finale' ? 'FINISHED' : `${round?.fun ? 'BONUS · ' : ''}ROUND ${st.round + 1} OF ${ROUNDS.length} · ${round?.title.toUpperCase()}`}</div>
           {st.phase === 'lobby' && <p className="gs-sub">{st.players.length} on their phones: {st.players.map((p) => p.name).join(', ') || 'nobody yet'}</p>}
           {round && st.phase !== 'lobby' && st.phase !== 'finale' && <><p className="gs-setup small">{round.setup}</p><p className="gs-ask small">{round.ask}</p></>}
           {(st.phase === 'writing' || st.phase === 'voting') && <p className="gs-sub">{st.doneCount} of {st.players.length} done{left !== null ? ` · ${left}s left` : ''}</p>}
@@ -79,6 +79,7 @@ function Remote({ classId }: { classId: string }) {
           {st.phase !== 'finale' && <button className="gs-send" style={{ marginTop: 16 }} onClick={() => cmd('next')}>{NEXT[st.phase]} ▸</button>}
           <div className="row" style={{ marginTop: 14, gap: 10, justifyContent: 'space-between' }}>
             <button className="gs-mini" onClick={() => cmd('mute')}>{st.muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
+            {st.phase !== 'lobby' && st.phase !== 'finale' && <button className="gs-mini" onClick={() => { if (confirm('End the show now?')) cmd('finish'); }}>⏹ End show</button>}
             {st.phase !== 'lobby' && <button className="gs-mini" onClick={() => { if (confirm('Start the whole show over?')) cmd('restart'); }}>↺ Restart</button>}
           </div>
         </>
