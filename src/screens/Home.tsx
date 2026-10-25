@@ -7,6 +7,7 @@ import { useSession, isStudentEmail } from '../lib/useSession';
 import { supabase } from '../lib/supabase';
 import InstallPrompt from '../install/InstallPrompt';
 import Pet, { COLOR_NAMES, swatch } from '../pet/Pet';
+import { SHOW_DATE } from '../gameshow/rounds';
 
 const MOOD_TEXT: Record<Mood, string> = {
   thriving: 'is thriving! ✨', content: 'is feeling good', sleepy: 'is a little sleepy', 'misses-you': 'misses you! 💜',
@@ -88,6 +89,8 @@ export default function Home() {
         <Link to="/week"><button className="secondary">This week's Sparks</button></Link>
       </div>
 
+      {(new Date().toLocaleDateString('en-CA') === SHOW_DATE || location.search.includes('gs=1')) &&
+        <Link to="/gameshow"><button className="warm">📺 Game Show is on! Join now</button></Link>}
       <Link to="/play"><button>🎮 Play games{joy < 70 ? ` · ${p.name} wants to play!` : ''}</button></Link>
       <button className="ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
     </main>

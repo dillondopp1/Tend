@@ -10,6 +10,8 @@ import Play from './screens/Play';
 import GameScreen from './screens/GameScreen';
 import TeacherLogin from './screens/teacher/TeacherLogin';
 import TeacherHome from './screens/teacher/TeacherHome';
+import GameShowHost from './screens/gameshow/Host';
+import GameShowPhone from './screens/gameshow/Phone';
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
         <Route path="/play/:game" element={<GameScreen />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />
         <Route path="/teacher" element={<TeacherHome />} />
+        <Route path="/teacher/gameshow" element={<GameShowHost />} />
+        <Route path="/gameshow" element={<GameShowPhone />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
