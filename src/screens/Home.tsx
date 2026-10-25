@@ -7,6 +7,8 @@ import { useSession, isStudentEmail } from '../lib/useSession';
 import { supabase } from '../lib/supabase';
 import InstallPrompt from '../install/InstallPrompt';
 import Pet, { COLOR_NAMES, swatch } from '../pet/Pet';
+import ModeToggle from '../lib/ModeToggle';
+import { useCanSwitchTo } from '../lib/roleSwitch';
 import { SHOW_DATE } from '../gameshow/rounds';
 
 const MOOD_TEXT: Record<Mood, string> = {
@@ -21,6 +23,7 @@ export default function Home() {
   const [now, setNow] = useState(new Date());
   const [painting, setPainting] = useState(false);
   // Hidden teacher shortcut: tap the pet's name 5 times to show "Teacher tools" on this device.
+  const hasTeacherSlot = useCanSwitchTo('teacher');
   const taps = useRef({ n: 0, at: 0 });
   const [teacherTools, setTeacherTools] = useState(() => { try { return localStorage.getItem('tend-teacher-tools') === '1'; } catch { return false; } });
   const tapName = () => {
@@ -56,6 +59,7 @@ export default function Home() {
   return (
     <main>
       <InstallPrompt />
+      <ModeToggle current="student" />
       <div className="home-top">
         <div className="flame">🔥 {s.current}<small>day{s.current === 1 ? '' : 's'}</small></div>
         <div className="flame" title="Streak shields">🛡️ {s.shields}</div>
@@ -100,7 +104,7 @@ export default function Home() {
       </div>
 
       <Link to="/play"><button>🎮 Play games{joy < 70 ? ` · ${p.name} wants to play!` : ''}</button></Link>
-      {teacherTools && <Link to="/teacher"><button className="secondary">🧑‍🏫 Teacher tools (class stats, Game Show)</button></Link>}
+      {teacherTools && !hasTeacherSlot && <Link to="/teacher"><button className="secondary">🧑‍🏫 Teacher tools (class stats, Game Show)</button></Link>}
       <button className="ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
     </main>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, Link } from 'react-router';
+import ModeToggle from '../../lib/ModeToggle';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabase';
 import { useSession, isStudentEmail } from '../../lib/useSession';
 import { callFunction } from '../../lib/functions';
@@ -123,6 +124,7 @@ export default function TeacherHome() {
 
   return (
     <main>
+      <ModeToggle current="teacher" />
       <h1>Your classes</h1>
       <p className="sub">Signed in as {session.user.email}. Reflections are private and never shown here.</p>
       {classes?.map((c) => <ClassCard key={c.id} c={c} />)}
