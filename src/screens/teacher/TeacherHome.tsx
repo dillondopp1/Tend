@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Navigate } from 'react-router';
+import { Navigate, Link } from 'react-router';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/supabase';
 import { useSession, isStudentEmail } from '../../lib/useSession';
 import { callFunction } from '../../lib/functions';
@@ -62,6 +62,8 @@ function ClassCard({ c }: { c: ClassRow }) {
         if (navigator.share) navigator.share({ text: share }).catch(() => {});
         else navigator.clipboard.writeText(share).then(() => setMsg('Invite copied!'));
       }}>Share invite</button>
+      <Link to={`/teacher/gameshow?class=${c.id}`}><button className="warm">📺 Start Game Show (put this on the TV)</button></Link>
+      <Link to={`/teacher/remote?class=${c.id}`}><button className="secondary">📱 Game Show remote (open this on your phone)</button></Link>
 
       <div className="glance">
         <div><b>{list.length}</b><span>students</span></div>

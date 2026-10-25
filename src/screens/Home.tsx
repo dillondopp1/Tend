@@ -7,6 +7,7 @@ import { useSession, isStudentEmail } from '../lib/useSession';
 import { supabase } from '../lib/supabase';
 import InstallPrompt from '../install/InstallPrompt';
 import Pet, { COLOR_NAMES, swatch } from '../pet/Pet';
+import { SHOW_DATE } from '../gameshow/rounds';
 
 const MOOD_TEXT: Record<Mood, string> = {
   thriving: 'is thriving! ✨', content: 'is feeling good', sleepy: 'is a little sleepy', 'misses-you': 'misses you! 💜',
@@ -57,6 +58,8 @@ export default function Home() {
       <div className="pet-stage"><Pet species={p.species} variant={p.colorVariant} mood={mood} stage={p.stage} size={250} /></div>
       <p className="pet-name">{p.name}</p>
       <p className="pet-meta">{p.name} {MOOD_TEXT[mood]}</p>
+      {(new Date().toLocaleDateString('en-CA') === SHOW_DATE || location.search.includes('gs=1')) &&
+        <Link to="/gameshow"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>📺 Game Show is on! Bring {p.name} to class</button></Link>}
       {painting ? <div className="card pop">
         <div className="swatches">
           {COLOR_NAMES.map((n, i) => {
