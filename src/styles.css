@@ -154,3 +154,29 @@ textarea { width: 100%; min-height: 140px; font: inherit; font-size: 1.1rem; pad
 .turn-phone p { opacity: .8; }
 .turn-icon { font-size: 4rem; display: inline-block; animation: turn 2s ease-in-out infinite; }
 @keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+
+/* Shown only on Netlify preview links so testers know it isn't the live app */
+.preview-badge { position: fixed; top: max(4px, env(safe-area-inset-top)); right: 6px; z-index: 50; pointer-events: none;
+  background: #ff3d7f; color: #fff; font: 900 11px Nunito, system-ui, sans-serif; letter-spacing: .06em; padding: 3px 8px; border-radius: 99px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+
+/* Quiz + shop (mockup) */
+.mock-note { margin: 0 0 6px; font-size: .75rem; font-weight: 800; color: #ff3d7f; letter-spacing: .04em; }
+.talent-pill { background: #fff; border-radius: 99px; padding: 6px 12px; font-weight: 900; box-shadow: 0 4px 14px rgba(255,180,61,.3); }
+.talent-flame { text-decoration: none; color: var(--ink); }
+.quiz-btn { background: #2f8a7a; box-shadow: 0 5px 0 #1f6a5c; }
+.passage p { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05rem; line-height: 1.55; margin: 0 0 10px; }
+.passage sup { font-family: Nunito, system-ui, sans-serif; font-weight: 900; color: var(--accent-ink); margin-right: 2px; }
+.passage p.hl { background: #fff3a8; border-radius: 8px; padding: 4px 6px; margin-left: -6px; margin-right: -6px; }
+.choices { display: grid; gap: 10px; margin-top: 12px; }
+.choice { margin: 0; background: #fff; color: var(--ink); box-shadow: 0 4px 0 var(--line); text-align: left; font-weight: 800; }
+.choice.right { background: #2fbf71; color: #fff; box-shadow: 0 4px 0 #1d8a50; }
+.choice.missed { background: #f1ebff; color: var(--muted); }
+.choice.dim { opacity: .5; }
+.shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.shop-item { background: #fff; border-radius: 18px; padding: 6px 6px 10px; text-align: center; box-shadow: 0 3px 10px rgba(43,33,64,.07); border: 3px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .85rem; }
+.shop-item.on { border-color: var(--accent); background: #f6f2ff; }
+.shop-item .d { color: var(--muted); font-size: .75rem; font-weight: 800; }
+.shop-thumb { background: none; box-shadow: none; padding: 0; margin: 0; width: auto; }
+button.mini { margin: 0; padding: 7px 10px; font-size: .8rem; border-radius: 12px; box-shadow: 0 3px 0 var(--accent-ink); width: 100%; }
+button.mini.secondary { box-shadow: 0 3px 0 #d6cbff; }
+button.mini.warm { box-shadow: 0 3px 0 #e0653a; }

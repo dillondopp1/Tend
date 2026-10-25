@@ -1,6 +1,7 @@
 import type { SpeciesId } from '../domain/species';
 import type { Mood } from '../domain/stats';
 import type { Stage } from '../domain/growth';
+import { BehindLayer, FullLayer, FrontLayer, type Outfit } from './costumes';
 
 // One shared bean-shaped rig (body, belly, face, feet) plus per-species parts.
 // Colours: [body, belly/face, accent (ears inner, nose, markings)].
@@ -173,10 +174,10 @@ function Face({ s, c, mood }: { s: SpeciesId; c: Palette; mood: Mood }) {
 }
 
 export interface PetProps {
-  species: SpeciesId; variant?: number; mood?: Mood; stage?: Stage; size?: number; animate?: boolean;
+  species: SpeciesId; variant?: number; mood?: Mood; stage?: Stage; size?: number; animate?: boolean; outfit?: Outfit;
 }
 
-export default function Pet({ species, variant = 0, mood = 'content', stage = 'grown', size = 200, animate = true }: PetProps) {
+export default function Pet({ species, variant = 0, mood = 'content', stage = 'grown', size = 200, animate = true, outfit }: PetProps) {
   const c = swatch(species, variant);
   const [body, belly] = c;
   const scale = STAGE_SCALE[stage];
@@ -187,7 +188,8 @@ export default function Pet({ species, variant = 0, mood = 'content', stage = 'g
       <g className={anim} style={{ transformOrigin: '100px 190px' }}>
         <g transform={`translate(100 190) scale(${scale}) translate(-100 -190)`}>
           <Back s={species} c={c} />
-          <Ears s={species} c={c} />
+          <BehindLayer outfit={outfit} />
+          {outfit?.full !== 'hw_ghost' && <Ears s={species} c={c} />}
           <g>
             <ellipse cx="74" cy="182" rx="18" ry="10" fill={body} />
             <ellipse cx="126" cy="182" rx="18" ry="10" fill={body} />
@@ -199,9 +201,11 @@ export default function Pet({ species, variant = 0, mood = 'content', stage = 'g
               <ellipse cx="30" cy="140" rx="12" ry="26" transform="rotate(20 30 140)" />
               <ellipse cx="170" cy="140" rx="12" ry="26" transform="rotate(-20 170 140)" />
             </g>}
+            <FullLayer outfit={outfit} />
             <Face s={species} c={c} mood={mood} />
           </g>
-          {stage === 'legendary' && <g fill="#ffd23d">
+          <FrontLayer outfit={outfit} />
+          {stage === 'legendary' && !outfit?.head && !outfit?.full && <g fill="#ffd23d">
             <path d="M70 40 L82 20 L92 36 L100 14 L108 36 L118 20 L130 40 Z" />
           </g>}
         </g>

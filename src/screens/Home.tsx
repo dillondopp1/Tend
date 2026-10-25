@@ -6,6 +6,7 @@ import { nextStage } from '../domain/growth';
 import { useSession, isStudentEmail } from '../lib/useSession';
 import { supabase } from '../lib/supabase';
 import InstallPrompt from '../install/InstallPrompt';
+import { useMock, mockEnabled, todayLocal } from '../mock/store';
 import Pet, { COLOR_NAMES, swatch } from '../pet/Pet';
 import { SHOW_DATE } from '../gameshow/rounds';
 
@@ -20,6 +21,8 @@ export default function Home() {
   const [failed, setFailed] = useState(false);
   const [now, setNow] = useState(new Date());
   const [painting, setPainting] = useState(false);
+  const mock = useMock();
+  const showMock = mockEnabled();
 
   useEffect(() => {
     if (!session) return;
@@ -50,12 +53,15 @@ export default function Home() {
       <InstallPrompt />
       <div className="home-top">
         <div className="flame">🔥 {s.current}<small>day{s.current === 1 ? '' : 's'}</small></div>
-        <div className="flame" title="Streak shields">🛡️ {s.shields}</div>
+        <div className="row" style={{ gap: 6 }}>
+          {showMock && <Link to="/shop" className="flame talent-flame" title="Talents">🪙 {mock.talents}</Link>}
+          <div className="flame" title="Streak shields">🛡️ {s.shields}</div>
+        </div>
       </div>
       {state.events?.shieldsUsed ? <div className="banner">Your shield protected your streak! 🛡️</div> : null}
       {state.events?.streakReset ? <div className="banner">New streak starting. Your best is {s.best} 🔥 Let's go!</div> : null}
 
-      <div className="pet-stage"><Pet species={p.species} variant={p.colorVariant} mood={mood} stage={p.stage} size={250} /></div>
+      <div className="pet-stage"><Pet species={p.species} variant={p.colorVariant} mood={mood} stage={p.stage} size={250} outfit={showMock ? mock.outfit : undefined} /></div>
       <p className="pet-name">{p.name}</p>
       <p className="pet-meta">{p.name} {MOOD_TEXT[mood]}</p>
       {(new Date().toLocaleDateString('en-CA') === SHOW_DATE || location.search.includes('gs=1')) &&
@@ -88,9 +94,11 @@ export default function Home() {
           ? <><span className="done-chip">✓ Today's Spark done</span>
               <Link to={`/spark/${state.today}`}><button className="secondary">Read it again</button></Link></>
           : <Link to={`/spark/${state.today}`}><button className="warm">✨ Today's Spark: feed {p.name}</button></Link>}
+        {showMock && <Link to="/quiz"><button className="quiz-btn">{mock.quizEarnedOn === todayLocal() ? '✓ Quiz done · practice again' : "📖 Today's Quiz · up to 50 🪙"}</button></Link>}
         <Link to="/week"><button className="secondary">This week's Sparks</button></Link>
       </div>
 
+      {showMock && <Link to="/shop"><button className="warm">🎃 Costume shop</button></Link>}
       <Link to="/play"><button>🎮 Play games{joy < 70 ? ` · ${p.name} wants to play!` : ''}</button></Link>
       <button className="ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
     </main>
