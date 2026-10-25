@@ -65,7 +65,6 @@ export function createStack(o: GameOpts): Game {
       ctx.restore();
       hud(ctx, g.score, t, !g.started ? 'Tap to drop each block. Stack it high!' : perfect > 0 ? 'Perfect! ✨' : undefined);
       phrase.drawBanner(ctx, 100);
-      phrase.drawCelebration(ctx);
 
       function drawBlock(c: CanvasRenderingContext2D, b: Block, y: number) {
         c.fillStyle = b.c; roundRect(c, b.x, y, b.w, BH - 3, 8);

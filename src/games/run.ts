@@ -122,7 +122,6 @@ export function createRun(o: GameOpts): Game {
       ctx.drawImage(pet, -size / 2, -size * sq, size, size * sq); ctx.restore();
       hud(ctx, g.score, t, g.started ? undefined : 'Swipe ← → to switch lanes, ↑ jump, ↓ slide');
       phrase.drawBanner(ctx, 100);
-      phrase.drawCelebration(ctx);
 
       function drawThing(c: CanvasRenderingContext2D, th: Thing) {
         const p = proj(th.lane, th.d);

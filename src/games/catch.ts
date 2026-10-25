@@ -60,7 +60,6 @@ export function createCatch(o: GameOpts): Game {
       ctx.drawImage(pet, -PR * 1.7 * s, -PR * 1.9 * s, PR * 3.4 * s, PR * 3.4 * s); ctx.restore();
       hud(ctx, g.score, t, g.started ? '❤️'.repeat(hearts) + '🤍'.repeat(3 - hearts) : 'Drag to move. Catch the good stuff, dodge ⛈️');
       phrase.drawBanner(ctx, 100);
-      phrase.drawCelebration(ctx);
     },
   };
   return g;

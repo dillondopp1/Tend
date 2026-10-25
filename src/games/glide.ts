@@ -65,7 +65,6 @@ export function createGlide(o: GameOpts): Game {
       ctx.drawImage(pet, -R * 1.6, -R * 1.7, R * 3.2, R * 3.2); ctx.restore();
       hud(ctx, g.score, t, g.started ? undefined : 'Tap to flap!');
       phrase.drawBanner(ctx, 100);
-      phrase.drawCelebration(ctx);
     },
   };
   return g;

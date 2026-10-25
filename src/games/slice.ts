@@ -105,7 +105,6 @@ export function createSlice(o: GameOpts): Game {
       if (hurt > 0) { ctx.fillStyle = `rgba(255,80,80,${hurt * 0.4})`; ctx.fillRect(0, 0, W, H); }
       hud(ctx, g.score, t, g.started ? '❤️'.repeat(Math.max(0, lives)) + '🤍'.repeat(3 - Math.max(0, lives)) : 'Swipe to slice the words! Skip the ⛈️');
       phrase.drawBanner(ctx, 100);
-      phrase.drawCelebration(ctx);
     },
   };
   return g;

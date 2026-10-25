@@ -276,7 +276,6 @@ export function createLaunch(o: GameOpts): Game {
       hud(ctx, g.score, t, g.started ? undefined : 'Pull your pet back and let go!');
       phrase.drawBanner(ctx, 100);
       if (toastT > 0) { ctx.textAlign = 'center'; ctx.fillStyle = t.ink; ctx.font = '900 22px Nunito, system-ui, sans-serif'; ctx.fillText(toast, W / 2, 170); }
-      phrase.drawCelebration(ctx);
 
       function wordLabel(c: CanvasRenderingContext2D, word: number, maxW: number) {
         const w = phrase.words[word];
