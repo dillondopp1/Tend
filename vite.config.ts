@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // registered by hand in src/main.tsx so it can poll for updates
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.svg'],
       manifest: {
         name: 'Tend',
