@@ -4,10 +4,13 @@ import type { Player, PublicState } from './engine';
 export type ToHost =
   | { t: 'hello'; p: Player }
   | { t: 'answer'; id: string; text: string }
-  | { t: 'vote'; id: string; aid: string };
+  | { t: 'vote'; id: string; aid: string }
+  // Teacher's phone remote
+  | { t: 'remote' }
+  | { t: 'cmd'; cmd: 'next' | 'mute' | 'restart' | 'remove'; aid?: string };
 
 /** Host -> phones. `left` is seconds remaining so phone clocks don't have to agree with the laptop's. */
-export type StateMsg = PublicState & { left: number | null };
+export type StateMsg = PublicState & { left: number | null; muted: boolean };
 
 export interface Wire {
   sendToHost(m: ToHost): void;

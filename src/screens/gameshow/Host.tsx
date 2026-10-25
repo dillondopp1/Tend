@@ -48,12 +48,13 @@ function Stage({ classId, code }: { classId: string; code: string }) {
   const ann = useRef(new Announcer());
   const [now, setNow] = useState(Date.now());
   const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
   const doneSince = useRef<number | null>(null);
   const hurried = useRef('');
 
   const publish = () => {
     const s = ref.current;
-    wire.current?.sendState({ ...toPublic(s), left: s.endsAt ? Math.max(0, Math.round((s.endsAt - Date.now()) / 1000)) : null });
+    wire.current?.sendState({ ...toPublic(s), left: s.endsAt ? Math.max(0, Math.round((s.endsAt - Date.now()) / 1000)) : null, muted: mutedRef.current });
   };
   const update = (f: (s: Show) => Show) => {
     const n = f(ref.current);
@@ -76,6 +77,15 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     else if (s.phase === 'voting') ann.current.say('vote');
     else if (s.phase === 'reveal') ann.current.say('reveal');
   };
+  const nextStep = (s: Show): Step | null =>
+    s.phase === 'lobby' ? 'start' : s.phase === 'intro' || s.phase === 'writing' ? 'closeWriting'
+    : s.phase === 'voting' ? 'closeVoting' : s.phase === 'reveal' ? 'next' : null;
+  const toggleMute = () => {
+    mutedRef.current = !mutedRef.current; ann.current.muted = mutedRef.current; setMuted(mutedRef.current);
+    if (mutedRef.current) ann.current.stop();
+    publish();
+  };
+  const restart = () => { ann.current.stop(); update(() => ({ ...newShow(), players: ref.current.players })); };
   const introDone = (round: number) => { const s = ref.current; if (s.phase === 'intro' && s.round === round) go('closeWriting'); };
 
   useEffect(() => {
@@ -83,6 +93,13 @@ function Stage({ classId, code }: { classId: string; code: string }) {
       if (m.t === 'hello') update((s) => addPlayer(s, m.p));
       else if (m.t === 'answer') update((s) => submitAnswer(s, m.id, m.text, newId));
       else if (m.t === 'vote') update((s) => castVote(s, m.id, m.aid));
+      else if (m.t === 'remote') publish();
+      else if (m.t === 'cmd') {
+        if (m.cmd === 'next') { const st = nextStep(ref.current); if (st) go(st); }
+        else if (m.cmd === 'mute') toggleMute();
+        else if (m.cmd === 'restart') restart();
+        else if (m.cmd === 'remove' && m.aid) { const aid = m.aid; update((x) => removeAnswer(x, aid)); }
+      }
       if (m.t === 'hello') publish();
     }, () => {}, publish);
     wire.current = w;
@@ -90,6 +107,17 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     const tick = setInterval(() => setNow(Date.now()), 500);
     return () => { clearInterval(beat); clearInterval(tick); w.close(); ann.current.stop(); };
   }, [classId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep the laptop awake while the show is up, so it can be driven from a phone.
+  useEffect(() => {
+    let lock: { release: () => Promise<void> } | null = null;
+    const get = () => (navigator as unknown as { wakeLock?: { request: (t: 'screen') => Promise<typeof lock> } }).wakeLock?.request('screen')
+      .then((l) => { lock = l; }).catch(() => {});
+    get();
+    const again = () => { if (!document.hidden) get(); };
+    document.addEventListener('visibilitychange', again);
+    return () => { document.removeEventListener('visibilitychange', again); lock?.release().catch(() => {}); };
+  }, []);
 
   // Auto-advance: everyone in (after a short grace) or the clock runs out.
   useEffect(() => {
@@ -187,9 +215,9 @@ function Stage({ classId, code }: { classId: string; code: string }) {
       )}
 
       <div className="gs-controls">
-        <button className="gs-mini" onClick={() => { ann.current.muted = !muted; setMuted(!muted); if (!muted) ann.current.stop(); }}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
+        <button className="gs-mini" onClick={toggleMute}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</button>
         {next && <button className={`gs-go ${s.phase === 'lobby' || s.phase === 'reveal' ? 'main' : ''}`} onClick={() => go(next.step)}>{next.label} ▸</button>}
-        {s.phase !== 'lobby' && <button className="gs-mini" onClick={() => { if (confirm('Start the whole show over?')) { ann.current.stop(); update(() => ({ ...newShow(), players: ref.current.players })); } }}>↺ Restart</button>}
+        {s.phase !== 'lobby' && <button className="gs-mini" onClick={() => { if (confirm('Start the whole show over?')) restart(); }}>↺ Restart</button>}
       </div>
     </div>
   );
