@@ -77,7 +77,7 @@ export function toPublic(s: Show): PublicState {
   };
 }
 
-export type Step = 'start' | 'closeWriting' | 'closeVoting' | 'next';
+export type Step = 'start' | 'closeWriting' | 'closeVoting' | 'next' | 'finish';
 
 /** Move the show forward. `now` is passed in so timers stay testable. */
 export function advance(s: Show, step: Step, now: number, secs: { write: number; vote: number }): Show {
@@ -94,6 +94,8 @@ export function advance(s: Show, step: Step, now: number, secs: { write: number;
     }
     case 'closeVoting':
       return s.phase === 'voting' ? { ...s, phase: 'reveal', endsAt: null } : s;
+    case 'finish':
+      return s.phase === 'lobby' || s.phase === 'finale' ? s : { ...s, phase: 'finale', endsAt: null };
     case 'next':
       if (s.phase !== 'reveal') return s;
       return last ? { ...s, phase: 'finale', endsAt: null }

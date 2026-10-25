@@ -7,7 +7,7 @@ export type ToHost =
   | { t: 'vote'; id: string; aid: string }
   // Teacher's phone remote
   | { t: 'remote' }
-  | { t: 'cmd'; cmd: 'next' | 'mute' | 'restart' | 'remove'; aid?: string };
+  | { t: 'cmd'; cmd: 'next' | 'finish' | 'mute' | 'restart' | 'remove'; aid?: string };
 
 /** Host -> phones. `left` is seconds remaining so phone clocks don't have to agree with the laptop's. */
 export type StateMsg = PublicState & { left: number | null; muted: boolean };

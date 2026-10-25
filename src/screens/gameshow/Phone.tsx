@@ -24,7 +24,8 @@ export default function GameShowPhone() {
         syncPet().catch(() => null),
       ]);
       if (!st) return setMe(null);
-      setMe({ id: session.user.id, name: st.display_name, species: app?.pet?.species ?? 'fox', color: app?.pet?.colorVariant ?? 0, classId: st.class_id });
+      // The class sees the animal's name, not the kid's own.
+      setMe({ id: session.user.id, name: app?.pet?.name ?? st.display_name, species: app?.pet?.species ?? 'fox', color: app?.pet?.colorVariant ?? 0, classId: st.class_id });
     })().catch(() => setMe(null));
   }, [session]);
 
@@ -86,12 +87,12 @@ function Play({ me }: { me: Me }) {
       {st?.phase === 'lobby' && <><p className="gs-big small">You're in, {me.name}!</p><p className="gs-sub">Look at the TV. The show starts soon.</p></>}
 
       {st && round && st.phase === 'intro' && <>
-        <div className="gs-tag">ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
+        <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
         <p className="gs-setup small">{round.setup}</p><p className="gs-ask small">{round.ask}</p>
         <p className="gs-sub">Listen to the announcer. Typing opens in a moment.</p></>}
 
       {st && round && st.phase === 'writing' && <>
-        <div className="gs-tag">ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
+        <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
         <p className="gs-setup small">{round.setup}</p><p className="gs-ask small">{round.ask}</p>
         <textarea className="gs-field" maxLength={MAX_ANSWER} rows={4} placeholder="Type your own answer…" value={text}
           onChange={(e) => setText(e.target.value)} />
