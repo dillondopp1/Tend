@@ -19,7 +19,7 @@ export default function Join() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError('');
-    if (which === 'code' && code.length !== 6) return setError('Class codes are 6 letters and numbers.');
+    if (which === 'code' && code.length < 4) return setError('Class codes are letters and numbers.');
     if (which === 'name' && !name.trim()) return;
     if (which === 'pin' && pin.length !== 4) return setError('Your PIN needs exactly 4 numbers.');
     if (which !== 'pin2') return setStep(step + 1);
@@ -46,7 +46,7 @@ export default function Join() {
           <h1>What's your class code?</h1>
           <p className="sub">Your teacher has it on the board.</p>
           <input className="code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-            maxLength={6} autoCapitalize="characters" autoComplete="off" autoFocus />
+            maxLength={12} autoCapitalize="characters" autoComplete="off" autoFocus />
         </>}
         {which === 'name' && <>
           <h1>What should we call you?</h1>
