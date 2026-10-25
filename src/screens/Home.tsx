@@ -58,6 +58,8 @@ export default function Home() {
       <div className="pet-stage"><Pet species={p.species} variant={p.colorVariant} mood={mood} stage={p.stage} size={250} /></div>
       <p className="pet-name">{p.name}</p>
       <p className="pet-meta">{p.name} {MOOD_TEXT[mood]}</p>
+      {(new Date().toLocaleDateString('en-CA') === SHOW_DATE || location.search.includes('gs=1')) &&
+        <Link to="/gameshow"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>📺 Game Show is on! Bring {p.name} to class</button></Link>}
       {painting ? <div className="card pop">
         <div className="swatches">
           {COLOR_NAMES.map((n, i) => {
@@ -89,8 +91,6 @@ export default function Home() {
         <Link to="/week"><button className="secondary">This week's Sparks</button></Link>
       </div>
 
-      {(new Date().toLocaleDateString('en-CA') === SHOW_DATE || location.search.includes('gs=1')) &&
-        <Link to="/gameshow"><button className="warm">📺 Game Show is on! Join now</button></Link>}
       <Link to="/play"><button>🎮 Play games{joy < 70 ? ` · ${p.name} wants to play!` : ''}</button></Link>
       <button className="ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
     </main>

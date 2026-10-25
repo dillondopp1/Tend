@@ -3,6 +3,8 @@ import { Navigate, Link } from 'react-router';
 import { supabase } from '../../lib/supabase';
 import { syncPet } from '../../lib/api';
 import { useSession, isStudentEmail } from '../../lib/useSession';
+import Pet from '../../pet/Pet';
+import type { SpeciesId } from '../../domain/species';
 import { ROUNDS, MAX_ANSWER } from '../../gameshow/rounds';
 import type { Player } from '../../gameshow/engine';
 import { openWire, type StateMsg, type Wire } from '../../gameshow/channel';
@@ -78,6 +80,7 @@ function Play({ me }: { me: Me }) {
   return (
     <div className="gs gs-phone">
       <div className="gs-logo small">GOSPEL <i>GAME SHOW</i></div>
+      <div style={{ textAlign: 'center' }}><Pet species={me.species as SpeciesId} variant={me.color} mood="thriving" stage="grown" size={st?.phase === 'lobby' || !st ? 140 : 64} /></div>
       {!st && <p className="gs-sub">Waiting for the show to start…</p>}
 
       {st?.phase === 'lobby' && <><p className="gs-big small">You're in, {me.name}!</p><p className="gs-sub">Look at the TV. The show starts soon.</p></>}
