@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, Link } from 'react-router';
 import { syncPet, getWeek, recolorPet, type AppState, type Week } from '../lib/api';
 import { decayed, moodFor, type Mood } from '../domain/stats';
@@ -7,6 +7,8 @@ import { useSession, isStudentEmail } from '../lib/useSession';
 import { supabase } from '../lib/supabase';
 import InstallPrompt from '../install/InstallPrompt';
 import Pet, { COLOR_NAMES, swatch } from '../pet/Pet';
+import ModeToggle from '../lib/ModeToggle';
+import { useCanSwitchTo } from '../lib/roleSwitch';
 import { SHOW_DATE } from '../gameshow/rounds';
 
 const MOOD_TEXT: Record<Mood, string> = {
@@ -20,6 +22,15 @@ export default function Home() {
   const [failed, setFailed] = useState(false);
   const [now, setNow] = useState(new Date());
   const [painting, setPainting] = useState(false);
+  // Hidden teacher shortcut: tap the pet's name 5 times to show "Teacher tools" on this device.
+  const hasTeacherSlot = useCanSwitchTo('teacher');
+  const taps = useRef({ n: 0, at: 0 });
+  const [teacherTools, setTeacherTools] = useState(() => { try { return localStorage.getItem('tend-teacher-tools') === '1'; } catch { return false; } });
+  const tapName = () => {
+    const t = taps.current, t0 = Date.now();
+    t.n = t0 - t.at < 3000 ? t.n + 1 : 1; t.at = t0;
+    if (t.n >= 5) { try { localStorage.setItem('tend-teacher-tools', '1'); } catch { /* private mode */ } setTeacherTools(true); }
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -48,6 +59,7 @@ export default function Home() {
   return (
     <main>
       <InstallPrompt />
+      <ModeToggle current="student" />
       <div className="home-top">
         <div className="flame">🔥 {s.current}<small>day{s.current === 1 ? '' : 's'}</small></div>
         <div className="flame" title="Streak shields">🛡️ {s.shields}</div>
@@ -56,7 +68,7 @@ export default function Home() {
       {state.events?.streakReset ? <div className="banner">New streak starting. Your best is {s.best} 🔥 Let's go!</div> : null}
 
       <div className="pet-stage"><Pet species={p.species} variant={p.colorVariant} mood={mood} stage={p.stage} size={250} /></div>
-      <p className="pet-name">{p.name}</p>
+      <p className="pet-name" onClick={tapName}>{p.name}</p>
       <p className="pet-meta">{p.name} {MOOD_TEXT[mood]}</p>
       {(new Date().toLocaleDateString('en-CA') === SHOW_DATE || location.search.includes('gs=1')) &&
         <Link to="/gameshow"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>📺 Game Show is on! Bring {p.name} to class</button></Link>}
@@ -92,6 +104,7 @@ export default function Home() {
       </div>
 
       <Link to="/play"><button>🎮 Play games{joy < 70 ? ` · ${p.name} wants to play!` : ''}</button></Link>
+      {teacherTools && !hasTeacherSlot && <Link to="/teacher"><button className="secondary">🧑‍🏫 Teacher tools (class stats, Game Show)</button></Link>}
       <button className="ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
     </main>
   );
