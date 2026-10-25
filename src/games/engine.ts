@@ -139,7 +139,7 @@ export const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /**
  * The week's key phrase as the heart of a game: words spawn in order, collected words light up in the
- * always-visible phrase banner, and finishing it shows the whole phrase + reference big, then starts
+ * always-visible phrase banner, and finishing it starts
  * another round so the phrase keeps coming back.
  */
 export class Phrase {
@@ -197,26 +197,6 @@ export class Phrase {
     });
     ctx.shadowBlur = 0;
     if (refText) { ctx.font = '800 11px Nunito, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText(refText, x - gap, 1); }
-    ctx.restore();
-  }
-
-  /** Full-screen moment when the phrase is completed. */
-  drawCelebration(ctx: CanvasRenderingContext2D) {
-    if (!this.celebrating) return;
-    const a = Math.min(1, this.celebrate / 0.4);
-    ctx.save(); ctx.globalAlpha = a;
-    ctx.fillStyle = 'rgba(43,33,64,.78)'; ctx.fillRect(0, H / 2 - 110, W, 230);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffd23d';
-    ctx.font = '900 16px Nunito, system-ui, sans-serif'; ctx.fillText('✨ PHRASE COMPLETE ✨', W / 2, H / 2 - 74);
-    ctx.fillStyle = '#ffffff';
-    const text = `“${this.words.join(' ')}”`;
-    let size = 34; ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`;
-    while (ctx.measureText(text).width > W - 30 && size > 18) { size -= 2; ctx.font = `900 ${size}px Nunito, system-ui, sans-serif`; }
-    ctx.fillText(text, W / 2, H / 2 - 10);
-    if (this.ref) { ctx.font = '800 17px Nunito, system-ui, sans-serif'; ctx.fillStyle = '#ffd23d'; ctx.fillText(this.ref, W / 2, H / 2 + 36); }
-    ctx.font = '800 14px Nunito, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)';
-    const note = wrapText(ctx, this.meaning || 'Bonus! Collect it again for more', W - 50).slice(0, 2);
-    note.forEach((l, i) => ctx.fillText(l, W / 2, H / 2 + 66 + i * 18));
     ctx.restore();
   }
 }
