@@ -73,7 +73,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     if (s === before) return;
     const r = s.round + 1;
     const R = showFor(s.showId), clip = `${R.clips}r${r}`;
-    const lead = R.rounds[s.round]?.fun && !R.rounds[s.round - 1]?.fun ? ['fun', clip] : [clip];
+    const lead = R.funBlock && R.rounds[s.round]?.fun && !R.rounds[s.round - 1]?.fun ? ['fun', clip] : [clip];
     if (step === 'finish') ann.current.say('finale');
     else if (step === 'start') ann.current.say(['welcome', clip], () => introDone(s.round));
     else if (step === 'next') s.phase === 'finale' ? ann.current.say('finale') : ann.current.say(lead, () => introDone(s.round));
@@ -172,7 +172,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
 
       {(s.phase === 'intro' || s.phase === 'writing') && (
         <div className="gs-center">
-          <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {s.round + 1} OF {rounds.length} · {round.title.toUpperCase()}</div>
+          <div className="gs-tag">{round.fun ? 'JUST FOR FUN · ' : ''}ROUND {s.round + 1} OF {rounds.length} · {round.title.toUpperCase()}</div>
           <p className="gs-setup">{round.setup}</p>
           <p className="gs-ask">{round.ask}</p>
           {s.phase === 'writing' && <p className="gs-sub">{pub.doneCount} of {s.players.length} answers in. Type on your phone.</p>}
