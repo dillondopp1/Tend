@@ -5,7 +5,7 @@ import { syncPet } from '../../lib/api';
 import { useSession, isStudentEmail } from '../../lib/useSession';
 import Pet from '../../pet/Pet';
 import type { SpeciesId } from '../../domain/species';
-import { ROUNDS, MAX_ANSWER } from '../../gameshow/rounds';
+import { showFor, MAX_ANSWER } from '../../gameshow/rounds';
 import type { Player } from '../../gameshow/engine';
 import { openWire, type StateMsg, type Wire } from '../../gameshow/channel';
 import '../../gameshow/gameshow.css';
@@ -60,7 +60,7 @@ function Play({ me }: { me: Me }) {
     return () => { clearInterval(hb); clearInterval(tick); document.removeEventListener('visibilitychange', again); w.close(); };
   }, [me]);
 
-  const round = st ? ROUNDS[st.round] : null;
+  const round = st ? showFor(st.showId).rounds[st.round] : null;
   const left = st?.left != null ? Math.max(0, st.left - Math.floor((now - gotAt) / 1000)) : null;
   const mySent = sent && st && sent.round === st.round ? sent : null;
   const myVote = voted && st && voted.round === st.round ? voted : null;

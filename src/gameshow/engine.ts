@@ -1,4 +1,4 @@
-import { ROUNDS, MAX_ANSWER } from './rounds';
+import { showFor, todaysShow, MAX_ANSWER } from './rounds';
 
 export type Phase = 'lobby' | 'intro' | 'writing' | 'voting' | 'reveal' | 'finale';
 
@@ -7,7 +7,8 @@ export interface Answer { aid: string; by: string; text: string }
 
 /** Everything the host knows. Phones only ever see PublicState. */
 export interface Show {
-  phase: Phase; round: number; // index into ROUNDS
+  showId: string; // which night's show (rounds.ts SHOWS)
+  phase: Phase; round: number; // index into that show's rounds
   players: Player[];
   answers: Answer[]; votes: Record<string, string>; // voter id -> aid
   endsAt: number | null; // ms epoch for the current timer
@@ -15,13 +16,14 @@ export interface Show {
 
 export interface PublicAnswer { aid: string; text: string; owner: string; by?: string; votes?: number }
 export interface PublicState {
+  showId: string;
   phase: Phase; round: number; endsAt: number | null;
   players: (Player & { done: boolean })[];
   answers: PublicAnswer[]; // voting: anonymous order; reveal: with `by` + `votes`
   doneCount: number;
 }
 
-export const newShow = (): Show => ({ phase: 'lobby', round: 0, players: [], answers: [], votes: {}, endsAt: null });
+export const newShow = (showId = todaysShow().id): Show => ({ showId, phase: 'lobby', round: 0, players: [], answers: [], votes: {}, endsAt: null });
 
 export function addPlayer(s: Show, p: Player): Show {
   const i = s.players.findIndex((x) => x.id === p.id);
@@ -71,7 +73,7 @@ export function toPublic(s: Show): PublicState {
       .sort((a, b) => (b.votes ?? 0) - (a.votes ?? 0));
   }
   return {
-    phase: s.phase, round: s.round, endsAt: s.endsAt,
+    showId: s.showId, phase: s.phase, round: s.round, endsAt: s.endsAt,
     players: s.players.map((p) => ({ ...p, done: done.includes(p.id) })),
     answers, doneCount: done.length,
   };
@@ -81,7 +83,7 @@ export type Step = 'start' | 'closeWriting' | 'closeVoting' | 'next' | 'finish';
 
 /** Move the show forward. `now` is passed in so timers stay testable. */
 export function advance(s: Show, step: Step, now: number, secs: { write: number; vote: number }): Show {
-  const last = s.round >= ROUNDS.length - 1;
+  const last = s.round >= showFor(s.showId).rounds.length - 1;
   switch (step) {
     case 'start': // lobby -> intro (round 1), or reveal -> next intro
       return { ...s, phase: 'intro', round: s.phase === 'lobby' ? 0 : s.round, answers: [], votes: {}, endsAt: null };

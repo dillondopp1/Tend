@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useSession, isStudentEmail } from '../../lib/useSession';
 import Pet from '../../pet/Pet';
 import type { SpeciesId } from '../../domain/species';
-import { ROUNDS, WRITE_SECS, VOTE_SECS } from '../../gameshow/rounds';
+import { showFor, todaysShow, WRITE_SECS, VOTE_SECS } from '../../gameshow/rounds';
 import {
   newShow, addPlayer, advance, submitAnswer, castVote, removeAnswer, toPublic, everyoneDone, type Show, type Step,
 } from '../../gameshow/engine';
@@ -16,7 +16,8 @@ const SECS = { write: WRITE_SECS, vote: VOTE_SECS };
 const GRACE_MS = 2500;
 const key = (classId: string) => `gs-host-${classId}`;
 function load(classId: string): Show {
-  try { const r = localStorage.getItem(key(classId)); if (r) return JSON.parse(r) as Show; } catch { /* fresh show */ }
+  // Resume a saved show only if it's tonight's; an old night's show starts fresh.
+  try { const r = localStorage.getItem(key(classId)); if (r) { const s = JSON.parse(r) as Show; if (s.showId === todaysShow().id) return s; } } catch { /* fresh show */ }
   return newShow();
 }
 let counter = 0;
@@ -71,9 +72,10 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     const s = ref.current;
     if (s === before) return;
     const r = s.round + 1;
-    const lead = ROUNDS[s.round]?.fun && !ROUNDS[s.round - 1]?.fun ? ['fun', `r${r}`] : [`r${r}`];
+    const R = showFor(s.showId), clip = `${R.clips}r${r}`;
+    const lead = R.rounds[s.round]?.fun && !R.rounds[s.round - 1]?.fun ? ['fun', clip] : [clip];
     if (step === 'finish') ann.current.say('finale');
-    else if (step === 'start') ann.current.say(['welcome', `r${r}`], () => introDone(s.round));
+    else if (step === 'start') ann.current.say(['welcome', clip], () => introDone(s.round));
     else if (step === 'next') s.phase === 'finale' ? ann.current.say('finale') : ann.current.say(lead, () => introDone(s.round));
     else if (before.phase === 'intro') ann.current.say('write');
     else if (s.phase === 'voting') ann.current.say('vote');
@@ -136,7 +138,8 @@ function Stage({ classId, code }: { classId: string; code: string }) {
   }, [now]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const s = show;
-  const round = ROUNDS[s.round];
+  const rounds = showFor(s.showId).rounds;
+  const round = rounds[s.round];
   const pub = toPublic(s);
   const left = s.endsAt ? Math.max(0, Math.ceil((s.endsAt - now) / 1000)) : null;
   const top = Math.max(0, ...pub.answers.map((a) => a.votes ?? 0));
@@ -146,7 +149,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     : s.phase === 'intro' ? { label: 'Start typing now', step: 'closeWriting' }
     : s.phase === 'writing' ? { label: 'Close answers', step: 'closeWriting' }
     : s.phase === 'voting' ? { label: 'Show results', step: 'closeVoting' }
-    : s.phase === 'reveal' ? { label: s.round === ROUNDS.length - 1 ? 'Finish' : 'Next round', step: 'next' }
+    : s.phase === 'reveal' ? { label: s.round === rounds.length - 1 ? 'Finish' : 'Next round', step: 'next' }
     : null;
 
   return (
@@ -156,6 +159,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
 
       {s.phase === 'lobby' && (
         <div className="gs-center">
+          <div className="gs-tag">TONIGHT · {showFor(s.showId).title.toUpperCase()}</div>
           <p className="gs-big">Grab your phone</p>
           <p className="gs-sub">Open Tend, sign in, and tap <b>Game Show</b> on your home screen.</p>
           <p className="gs-sub">Class code <b className="gs-code">{code}</b></p>
@@ -168,7 +172,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
 
       {(s.phase === 'intro' || s.phase === 'writing') && (
         <div className="gs-center">
-          <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {s.round + 1} OF {ROUNDS.length} · {round.title.toUpperCase()}</div>
+          <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {s.round + 1} OF {rounds.length} · {round.title.toUpperCase()}</div>
           <p className="gs-setup">{round.setup}</p>
           <p className="gs-ask">{round.ask}</p>
           {s.phase === 'writing' && <p className="gs-sub">{pub.doneCount} of {s.players.length} answers in. Type on your phone.</p>}

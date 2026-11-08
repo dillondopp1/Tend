@@ -9,7 +9,8 @@ export interface Round {
   fun?: boolean;
 }
 
-export const ROUNDS: Round[] = [
+/** Jeremiah show, CFM week 43 (2026-10-25). Final: leave as is. */
+export const JEREMIAH: Round[] = [
   { id: 1, title: 'Left out', setup: 'You see the story. Everyone from your group is at someone\'s house, and nobody told you.',
     ask: 'What\'s the first thing you actually think?', vote: 'Vote for the most honest one.',
     lens: { ref: 'Jeremiah 1:5', text: 'Before I formed thee in the belly I knew thee; and before thou camest forth out of the womb I sanctified thee.' } },
@@ -47,8 +48,62 @@ export const ROUNDS: Round[] = [
     ask: 'Type the rule.', vote: 'Vote for the funniest one.' },
 ];
 
+/** Ezekiel show, CFM week 45: "A New Spirit Will I Put within You" (Ezekiel 1-3; 33-34; 36-37; 47). */
+export const EZEKIEL: Round[] = [
+  { id: 1, title: 'The stony heart', setup: 'Someone apologizes for something that really hurt you, and you can tell they mean it. Part of you still wants to stay mad.',
+    ask: 'Type what you honestly say back.', vote: 'Vote for the most honest one.',
+    lens: { ref: 'Ezekiel 36:26', text: 'A new heart also will I give you, and a new spirit will I put within you: and I will take away the stony heart out of your flesh.' } },
+  { id: 2, title: 'Fourth time', setup: 'You keep making the same mistake you promised yourself you\'d stop. It\'s the fourth time this month.',
+    ask: 'Type what you tell yourself right after.', vote: 'Vote for the most honest one.',
+    lens: { ref: 'Ezekiel 33:16', text: 'None of his sins that he hath committed shall be mentioned unto him.' } },
+  { id: 3, title: 'Dry bones', setup: 'Since summer you\'ve stopped reading and stopped praying, and church feels like going through the motions.',
+    ask: 'Type the honest reason it\'s hard to start again.', vote: 'Vote for the most honest one.',
+    lens: { ref: 'Ezekiel 37:5', text: 'Behold, I will cause breath to enter into you, and ye shall live.' } },
+  { id: 4, title: 'The watchman', setup: 'Your friend is about to send a screenshot of someone else\'s private text to the whole group chat.',
+    ask: 'Type the text you send your friend before they hit send.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Ezekiel 3:17', text: 'Son of man, I have made thee a watchman unto the house of Israel.' } },
+  { id: 5, title: 'The lost sheep', setup: 'Someone who used to be in your class hasn\'t come in months. You run into them at the store.',
+    ask: 'Type the first thing you say.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Ezekiel 34:16', text: 'I will seek that which was lost, and bring again that which was driven away, and will bind up that which was broken.' } },
+  { id: 6, title: 'Two sticks', setup: 'A friend from another church texts: "why do you even need the Book of Mormon if you already have the Bible?"',
+    ask: 'Type your honest reply.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Ezekiel 37:17', text: 'And join them one to another into one stick; and they shall become one in thine hand.' } },
+  { id: 7, title: 'The river', setup: 'You\'re walking into the temple to do baptisms after a rough week, and you don\'t feel like anything special is going to happen.',
+    ask: 'Type what you hope happens anyway.', vote: 'Vote for the most honest one.',
+    lens: { ref: 'Ezekiel 47:9', text: 'And every thing shall live whither the river cometh.' } },
+  { id: 8, title: 'Feed my sheep', setup: 'Your ministering companion forgot again, and the family you\'re assigned to just had a new baby.',
+    ask: 'Type what you actually do this week.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Ezekiel 34:15', text: 'I will feed my flock, and I will cause them to lie down, saith the Lord God.' } },
+  { id: 9, fun: true, title: 'Skeleton talk', setup: 'A whole valley of dry bones just came back to life.',
+    ask: 'Type the first thing one of the skeletons says.', vote: 'Vote for the funniest one.' },
+  { id: 10, fun: true, title: 'Eat the scroll', setup: 'Ezekiel ate a scroll and it tasted as sweet as honey.',
+    ask: 'Type which book of scripture you\'d eat, and what flavor it is.', vote: 'Vote for the funniest one.' },
+  { id: 11, fun: true, title: 'Night shift', setup: 'You\'re the watchman on the city wall all night, and nothing is happening.',
+    ask: 'Type the most boring warning you shout.', vote: 'Vote for the funniest one.' },
+  { id: 12, fun: true, title: 'Two sticks', setup: 'Ezekiel joined two sticks into one.',
+    ask: 'Type a brand-new invention made from two sticks.', vote: 'Vote for the funniest one.' },
+  { id: 13, fun: true, title: 'Fish complaint', setup: 'A river flows out of the temple, and suddenly the Dead Sea is full of fish.',
+    ask: 'Type the first complaint from one of the fish.', vote: 'Vote for the funniest one.' },
+  { id: 14, fun: true, title: 'The wheels', setup: 'Ezekiel saw wheels inside of wheels.',
+    ask: 'Type the name of the theme park ride.', vote: 'Vote for the funniest one.' },
+];
+
+export interface ShowDef { id: string; date: string; title: string; clips: string; rounds: Round[] }
+/** One show per class night. `clips` is the folder under public/gameshow for its round clips. */
+export const SHOWS: ShowDef[] = [
+  { id: 'jeremiah', date: '2026-10-25', title: 'Jeremiah', clips: '', rounds: JEREMIAH },
+  { id: 'ezekiel', date: '2026-11-08', title: 'Ezekiel', clips: 'ezekiel/', rounds: EZEKIEL },
+];
+const localToday = () => new Date().toLocaleDateString('en-CA');
+/** Today's show, or the most recent one before today. */
+export function todaysShow(today = localToday()): ShowDef {
+  const past = SHOWS.filter((x) => x.date <= today).sort((a, b) => (a.date < b.date ? 1 : -1));
+  return past[0] ?? SHOWS[SHOWS.length - 1];
+}
+export const showFor = (id?: string): ShowDef => SHOWS.find((x) => x.id === id) ?? todaysShow();
+/** The Home button only appears on a show's own date. */
+export const isShowDay = (today = localToday()) => SHOWS.some((x) => x.date === today);
+
 export const MAX_ANSWER = 140;
 export const WRITE_SECS = 100;
 export const VOTE_SECS = 45;
-/** The show is a one-night feature; the Home button only appears on this local date. */
-export const SHOW_DATE = '2026-10-25';
