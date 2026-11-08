@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { newShow, addPlayer, advance, submitAnswer, castVote, removeAnswer, toPublic, everyoneDone, type Show } from './engine';
-import { ROUNDS } from './rounds';
+import { showFor } from './rounds';
+
+const ROUNDS = showFor('jeremiah').rounds;
 
 const secs = { write: 100, vote: 45 };
 let n = 0;
@@ -8,7 +10,7 @@ const id = () => `a${++n}`;
 const P = (i: string) => ({ id: i, name: i.toUpperCase(), species: 'fox', color: 0 });
 
 function writing(players: string[]): Show {
-  let s = newShow();
+  let s = newShow('jeremiah');
   players.forEach((p) => (s = addPlayer(s, P(p))));
   s = advance(s, 'start', 0, secs);
   return advance(s, 'closeWriting', 1000, secs);
@@ -30,7 +32,7 @@ describe('game show engine', () => {
     s = submitAnswer(s, 'y', 'a'.repeat(500), id);
     expect(s.answers.find((a) => a.by === 'y')!.text).toHaveLength(140);
     expect(submitAnswer(s, 'nobody', 'hi', id)).toBe(s);
-    expect(submitAnswer(newShow(), 'x', 'hi', id).answers).toHaveLength(0);
+    expect(submitAnswer(newShow('jeremiah'), 'x', 'hi', id).answers).toHaveLength(0);
   });
 
   it('goes to voting with 3+ answers and hides authors until reveal', () => {
@@ -97,5 +99,23 @@ describe('game show engine', () => {
     s = addPlayer(s, { ...P('x'), name: 'Renamed' });
     expect(s.players).toHaveLength(3);
     expect(s.players[0].name).toBe('Renamed');
+  });
+});
+
+describe('shows', () => {
+  it('each show runs its own number of rounds', async () => {
+    const { SHOWS, todaysShow, isShowDay } = await import('./rounds');
+    expect(SHOWS.map((x) => x.id)).toEqual(['jeremiah', 'ezekiel']);
+    expect(todaysShow('2026-11-08').id).toBe('ezekiel');
+    expect(todaysShow('2026-11-01').id).toBe('jeremiah');
+    expect(isShowDay('2026-11-08')).toBe(true);
+    expect(isShowDay('2026-11-09')).toBe(false);
+    let s = addPlayer(newShow('ezekiel'), P('x'));
+    s = advance(s, 'start', 0, secs);
+    for (let r = 0; r < showFor('ezekiel').rounds.length; r++) {
+      s = advance(s, 'closeWriting', 1, secs); s = advance(s, 'closeWriting', 2, secs); s = advance(s, 'next', 3, secs);
+    }
+    expect(s.phase).toBe('finale');
+    expect(toPublic(s).showId).toBe('ezekiel');
   });
 });

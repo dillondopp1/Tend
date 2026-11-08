@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { supabase } from '../../lib/supabase';
 import { useSession, isStudentEmail } from '../../lib/useSession';
-import { ROUNDS } from '../../gameshow/rounds';
+import { showFor } from '../../gameshow/rounds';
 import { openWire, type StateMsg, type Wire } from '../../gameshow/channel';
 import '../../gameshow/gameshow.css';
 
@@ -48,7 +48,8 @@ function Remote({ classId }: { classId: string }) {
   }, [classId]);
 
   const cmd = (c: 'next' | 'finish' | 'mute' | 'restart' | 'remove', aid?: string) => wire.current?.sendToHost({ t: 'cmd', cmd: c, aid });
-  const round = st ? ROUNDS[st.round] : null;
+  const rounds = st ? showFor(st.showId).rounds : [];
+  const round = st ? rounds[st.round] : null;
   const left = st?.left != null ? Math.max(0, st.left - Math.floor((now - gotAt) / 1000)) : null;
   const stale = st ? now - gotAt > 9000 : false;
 
@@ -59,7 +60,7 @@ function Remote({ classId }: { classId: string }) {
       {stale && <p className="gs-sub">Lost the laptop. Is it still on and online?</p>}
       {st && (
         <>
-          <div className="gs-tag">{st.phase === 'lobby' ? 'LOBBY' : st.phase === 'finale' ? 'FINISHED' : `${round?.fun ? 'BONUS · ' : ''}ROUND ${st.round + 1} OF ${ROUNDS.length} · ${round?.title.toUpperCase()}`}</div>
+          <div className="gs-tag">{st.phase === 'lobby' ? 'LOBBY' : st.phase === 'finale' ? 'FINISHED' : `${round?.fun ? 'JUST FOR FUN · ' : ''}ROUND ${st.round + 1} OF ${rounds.length} · ${round?.title.toUpperCase()}`}</div>
           {st.phase === 'lobby' && <p className="gs-sub">{st.players.length} on their phones: {st.players.map((p) => p.name).join(', ') || 'nobody yet'}</p>}
           {round && st.phase !== 'lobby' && st.phase !== 'finale' && <><p className="gs-setup small">{round.setup}</p><p className="gs-ask small">{round.ask}</p></>}
           {(st.phase === 'writing' || st.phase === 'voting') && <p className="gs-sub">{st.doneCount} of {st.players.length} done{left !== null ? ` · ${left}s left` : ''}</p>}

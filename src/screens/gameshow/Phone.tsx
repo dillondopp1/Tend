@@ -5,7 +5,7 @@ import { syncPet } from '../../lib/api';
 import { useSession, isStudentEmail } from '../../lib/useSession';
 import Pet from '../../pet/Pet';
 import type { SpeciesId } from '../../domain/species';
-import { ROUNDS, MAX_ANSWER } from '../../gameshow/rounds';
+import { showFor, MAX_ANSWER } from '../../gameshow/rounds';
 import type { Player } from '../../gameshow/engine';
 import { openWire, type StateMsg, type Wire } from '../../gameshow/channel';
 import '../../gameshow/gameshow.css';
@@ -60,7 +60,7 @@ function Play({ me }: { me: Me }) {
     return () => { clearInterval(hb); clearInterval(tick); document.removeEventListener('visibilitychange', again); w.close(); };
   }, [me]);
 
-  const round = st ? ROUNDS[st.round] : null;
+  const round = st ? showFor(st.showId).rounds[st.round] : null;
   const left = st?.left != null ? Math.max(0, st.left - Math.floor((now - gotAt) / 1000)) : null;
   const mySent = sent && st && sent.round === st.round ? sent : null;
   const myVote = voted && st && voted.round === st.round ? voted : null;
@@ -87,12 +87,12 @@ function Play({ me }: { me: Me }) {
       {st?.phase === 'lobby' && <><p className="gs-big small">You're in, {me.name}!</p><p className="gs-sub">Look at the TV. The show starts soon.</p></>}
 
       {st && round && st.phase === 'intro' && <>
-        <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
+        <div className="gs-tag">{round.fun ? 'JUST FOR FUN · ' : ''}ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
         <p className="gs-setup small">{round.setup}</p><p className="gs-ask small">{round.ask}</p>
         <p className="gs-sub">Listen to the announcer. Typing opens in a moment.</p></>}
 
       {st && round && st.phase === 'writing' && <>
-        <div className="gs-tag">{round.fun ? 'BONUS · ' : ''}ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
+        <div className="gs-tag">{round.fun ? 'JUST FOR FUN · ' : ''}ROUND {st.round + 1} · {round.title.toUpperCase()}</div>
         <p className="gs-setup small">{round.setup}</p><p className="gs-ask small">{round.ask}</p>
         <textarea className="gs-field" maxLength={MAX_ANSWER} rows={4} placeholder="Type your own answer…" value={text}
           onChange={(e) => setText(e.target.value)} />

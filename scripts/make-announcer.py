@@ -7,7 +7,11 @@ OUT = pathlib.Path(__file__).resolve().parent.parent / 'public' / 'gameshow'
 VOICE, RATE, PITCH = 'en-US-GuyNeural', '+8%', '+4Hz'
 
 src = (pathlib.Path(__file__).resolve().parent.parent / 'src' / 'gameshow' / 'rounds.ts').read_text(encoding='utf-8')
-rounds = re.findall(r"title: '(.*?)', setup: '(.*?)',\s*ask: '(.*?)', vote:", src)
+def rounds_of(name):
+    part = src[src.index(f'export const {name}'):]
+    part = part[:part.index('];')]
+    return re.findall(r"title: '(.*?)', setup: '(.*?)',\s*ask: '(.*?)', vote:", part)
+SHOWS = [('JEREMIAH', ''), ('EZEKIEL', 'ezekiel/')]  # array name in rounds.ts, clip folder
 spoken = lambda t: t.replace(chr(92) + "'", "'").replace('🙂', 'smiley face').replace('1 a.m.', 'one A M').replace('a.m.', 'A M')
 
 LINES = {
@@ -20,11 +24,13 @@ LINES = {
   'fun': "Alright! The serious part is done. Time for some bonus rounds, just for fun!",
   'finale': "And that's the show! Thank you for being honest tonight. Keep thinking about these. You're the best audience in the world.",
 }
-for i, (t, s, a) in enumerate(rounds, 1):
-    LINES[f'r{i}'] = f"Round {i}. {spoken(t)}. {spoken(s)} {spoken(a)}"
+for name, folder in SHOWS:
+    for i, (t, s, a) in enumerate(rounds_of(name), 1):
+        LINES[f'{folder}r{i}'] = f"Round {i}. {spoken(t)}. {spoken(s)} {spoken(a)}"
 
 async def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / 'ezekiel').mkdir(exist_ok=True)
     import sys
     for k, t in LINES.items():
         if (OUT / f'{k}.mp3').exists() and '--force' not in sys.argv: continue  # only record what's missing
