@@ -1,7 +1,7 @@
 import { json, preflight, readBody } from '../_shared/http.ts';
 import { admin, tokenHashFor } from '../_shared/admin.ts';
 
-// Teacher sign-in with email + 4-digit PIN. Creates the auth user on first use (the PIN row,
+// Teacher sign-in with email + PIN (6-12 digits; older 4-digit PINs still work). Lockouts escalate in SQL. Creates the auth user on first use (the PIN row,
 // set by hand, is the authorisation), then hands back a one-time token like the student flow.
 Deno.serve(async (req) => {
   const pre = preflight(req); if (pre) return pre;

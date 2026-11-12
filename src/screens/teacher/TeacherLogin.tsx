@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { signInTeacher } from '../../lib/studentAuth';
 import { errorText } from '../../lib/messages';
 import { useSession, isStudentEmail } from '../../lib/useSession';
+import { isTeacherPin, TEACHER_PIN_MAX } from '../../lib/pin';
 
 export default function TeacherLogin() {
   const nav = useNavigate();
@@ -23,14 +24,16 @@ export default function TeacherLogin() {
       const r = await signInTeacher(email.trim(), pin);
       setBusy(false);
       if (!r.ok) return setError(r.error === 'bad_login' ? "That email and PIN don't match." : r.error === 'locked'
-        ? 'Too many tries. Wait an hour, or use the email link instead.' : errorText(r.error));
+        ? 'Too many tries. Wait a while, or use the email link instead.' : errorText(r.error));
       return nav('/teacher', { replace: true });
     }
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(), options: { emailRedirectTo: `${location.origin}/teacher`, shouldCreateUser: true },
+      email: email.trim(), options: { emailRedirectTo: `${location.origin}/teacher`, shouldCreateUser: false },
     });
     setBusy(false);
-    if (error) setError(error.message); else setSent(true);
+    if (error) setError(/signup|not allowed/i.test(error.message)
+      ? "That email isn't set up for Tend yet. Ask the app owner to add you." : error.message);
+    else setSent(true);
   }
 
   return (
@@ -47,9 +50,9 @@ export default function TeacherLogin() {
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
           {mode === 'pin' && <>
             <label>PIN</label>
-            <input className="pin" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} inputMode="numeric" maxLength={4} type="password" required />
+            <input className="pin" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} inputMode="numeric" minLength={4} maxLength={TEACHER_PIN_MAX} type="password" autoComplete="current-password" required />
           </>}
-          <button disabled={busy}>{busy ? 'Signing in…' : mode === 'pin' ? 'Sign in' : 'Send me a sign-in link'}</button>
+          <button disabled={busy || (mode === 'pin' && !isTeacherPin(pin))}>{busy ? 'Signing in…' : mode === 'pin' ? 'Sign in' : 'Send me a sign-in link'}</button>
           {error && <p className="error">{error}</p>}
           <button type="button" className="ghost" onClick={() => { setMode(mode === 'pin' ? 'link' : 'pin'); setError(''); }}>
             {mode === 'pin' ? 'No PIN? Email me a link instead' : 'I have a PIN'}

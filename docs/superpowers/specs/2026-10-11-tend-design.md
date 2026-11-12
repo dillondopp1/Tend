@@ -47,6 +47,8 @@ Two Edge Functions, using the service role key server-side only:
 - **Lockout:** 5 wrong PINs → locked for 15 minutes (`failed_attempts`, `locked_until`); the **third** lockout lasts until the teacher resets the PIN (`lockouts`). Messages stay friendly. Login reveals no more about which names exist than joining already does (join must say "name taken"), so a "too many tries" message for a real name is accepted.
 - Sessions persist on the device, so students normally enter their PIN once.
 - Teachers reset PINs through a third function, **`reset-student-pin`**, which checks that the caller teaches that student's class.
+- A PIN reset records `students.pin_reset_at`. Reflections written before the latest reset are no longer readable by any session (RLS), so a new PIN never opens older private reflections.
+- **Teacher PIN** (`teacher-login`): email + 6–12 digit PIN (older 4-digit PINs still accepted; replace them with `_set_teacher_pin`, service role). Every 5 misses locks the email: 1 h, then 6 h, then 24 h each round; a correct PIN clears it. Public sign-up is off; teachers are created by `teacher-login`.
 
 ### 4.2 Teachers
 
