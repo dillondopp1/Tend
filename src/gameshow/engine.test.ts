@@ -105,7 +105,10 @@ describe('game show engine', () => {
 describe('shows', () => {
   it('each show runs its own number of rounds', async () => {
     const { SHOWS, todaysShow, isShowDay } = await import('./rounds');
-    expect(SHOWS.map((x) => x.id)).toEqual(['jeremiah', 'ezekiel']);
+    expect(SHOWS.map((x) => x.id)).toEqual(['jeremiah', 'ezekiel', 'daniel']);
+    expect(todaysShow('2026-11-15').id).toBe('daniel');
+    expect(todaysShow('2026-11-14').id).toBe('ezekiel');
+    expect(showFor('daniel').rounds.map((r) => !!r.fun)).toEqual(Array.from({ length: 16 }, (_, i) => i % 2 === 1));
     expect(todaysShow('2026-11-08').id).toBe('ezekiel');
     expect(todaysShow('2026-11-01').id).toBe('jeremiah');
     expect(isShowDay('2026-11-08')).toBe(true);

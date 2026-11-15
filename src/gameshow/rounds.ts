@@ -92,6 +92,50 @@ export const EZEKIEL: Round[] = [
     ask: 'Type the slogan for the resort.', vote: 'Vote for the funniest one.' },
 ];
 
+/** Daniel show, CFM week 46: "There Is No Other God That Can Deliver" (Daniel 1-7). Serious and fun alternate. */
+export const DANIEL: Round[] = [
+  { id: 1, title: 'The table', setup: 'After the big win, the whole team goes to a teammate\'s house. Someone passes around a vape and says, "one hit, nobody\'s telling your parents." Everyone is watching you.',
+    ask: 'Type what you say.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Daniel 1:8', text: 'But Daniel purposed in his heart that he would not defile himself with the portion of the king\'s meat, nor with the wine which he drank.' } },
+  { id: 2, fun: true, title: 'Ten days of veggies', setup: 'Daniel and his friends ate only vegetables for ten days and came out healthier than everyone else.',
+    ask: 'Type the title of the diet book they write.', vote: 'Vote for the funniest one.' },
+  { id: 3, title: 'The big decision', setup: 'You have until Friday to decide: stay on the team you\'ve played on for years, or switch schools for a better program. You keep telling people you\'re praying about it. You haven\'t actually prayed once.',
+    ask: 'Type the honest reason you haven\'t.', vote: 'Vote for the most honest one.',
+    lens: { ref: 'Daniel 2:18', text: 'That they would desire mercies of the God of heaven concerning this secret.' } },
+  { id: 4, fun: true, title: 'The king\'s demand', setup: 'The king forgot his dream and ordered the wise men to tell him the dream AND what it means.',
+    ask: 'Type the next unreasonable demand the king makes.', vote: 'Vote for the funniest one.' },
+  { id: 5, title: 'Everyone bows', setup: 'The group chat is roasting a kid in your grade with a mean edited photo. Fifteen people have reacted with laughing faces. Then someone texts: "why are you the only one not reacting, relax."',
+    ask: 'Type what you send back.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Daniel 3:17', text: 'Our God whom we serve is able to deliver us from the burning fiery furnace.' } },
+  { id: 6, fun: true, title: 'Band practice', setup: 'Whenever the band played, everyone had to bow to a ninety-foot gold statue.',
+    ask: 'Type the name of the song the band plays.', vote: 'Vote for the funniest one.' },
+  { id: 7, title: 'But if not', setup: 'You said no in the group chat, and nothing magic happened. The next week you\'re eating lunch alone while the group laughs at a table across the room. Nobody is coming to get you.',
+    ask: 'Type what you tell yourself while you eat.', vote: 'Vote for the most honest one.',
+    lens: { ref: 'Daniel 3:18', text: 'But if not, be it known unto thee, O king, that we will not serve thy gods, nor worship the golden image which thou hast set up.' } },
+  { id: 8, fun: true, title: 'The thermostat', setup: 'The king ordered the furnace heated seven times hotter than usual.',
+    ask: 'Type the note taped to the furnace thermostat.', vote: 'Vote for the funniest one.' },
+  { id: 9, title: 'The only one', setup: 'You\'re the only member of your church in your grade. A new kid at lunch asks, "what do you do on Sundays, are you in some weird church?" The whole table goes quiet to hear your answer.',
+    ask: 'Type your answer in one sentence.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Daniel 2:35', text: 'And the stone that smote the image became a great mountain, and filled the whole earth.' } },
+  { id: 10, fun: true, title: 'Grass diet', setup: 'The king spent seven years eating grass like an ox.',
+    ask: 'Type his review of the grass.', vote: 'Vote for the funniest one.' },
+  { id: 11, title: 'The answer key', setup: 'The sub steps into the hallway in the middle of your test, and the answer key is open on the desk three feet from you. No cameras, and nobody is looking.',
+    ask: 'Type what you tell yourself right then.', vote: 'Vote for the most honest one.',
+    lens: { ref: 'Daniel 6:4', text: 'They could find none occasion nor fault; forasmuch as he was faithful.' } },
+  { id: 12, fun: true, title: 'The hand', setup: 'During the king\'s big party, a hand appears out of nowhere and starts writing on the wall.',
+    ask: 'Type what the hand writes.', vote: 'Vote for the funniest one.' },
+  { id: 13, title: 'The window', setup: 'It\'s an away meet and you\'re sharing a hotel room with three teammates. You always pray before bed. They\'re watching a movie and joking loudly, and the lights are about to go out.',
+    ask: 'Type what you do and what you say if someone asks.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Daniel 6:10', text: 'He kneeled upon his knees three times a day, and prayed, and gave thanks before his God, as he did aforetime.' } },
+  { id: 14, fun: true, title: 'Lion review', setup: 'Daniel spent the night in a den of lions and nothing happened.',
+    ask: 'Type the lions\' one-star review of the night.', vote: 'Vote for the funniest one.' },
+  { id: 15, title: 'Just some guy', setup: 'In history class a kid says, loud enough for everyone, "Jesus was just some guy who got himself killed." The teacher looks around the room, and then at you.',
+    ask: 'Type what you say.', vote: 'Vote for the one you\'d steal.',
+    lens: { ref: 'Daniel 7:14', text: 'And there was given him dominion, and glory, and a kingdom, that all people, nations, and languages, should serve him.' } },
+  { id: 16, fun: true, title: 'Beast number five', setup: 'Daniel dreamed of four strange beasts.',
+    ask: 'Type the name of a fifth beast and one weird feature.', vote: 'Vote for the funniest one.' },
+];
+
 export interface ShowDef {
   id: string; date: string; title: string; clips: string; rounds: Round[];
   /** Fun rounds come as one block at the end, announced with the 'fun' clip (otherwise they alternate). */
@@ -101,6 +145,7 @@ export interface ShowDef {
 export const SHOWS: ShowDef[] = [
   { id: 'jeremiah', date: '2026-10-25', title: 'Jeremiah', clips: '', rounds: JEREMIAH, funBlock: true },
   { id: 'ezekiel', date: '2026-11-08', title: 'Ezekiel', clips: 'ezekiel/', rounds: EZEKIEL },
+  { id: 'daniel', date: '2026-11-15', title: 'Daniel', clips: 'daniel/', rounds: DANIEL },
 ];
 const localToday = () => new Date().toLocaleDateString('en-CA');
 /** Today's show, or the most recent one before today. */

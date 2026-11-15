@@ -11,7 +11,7 @@ def rounds_of(name):
     part = src[src.index(f'export const {name}'):]
     part = part[:part.index('];')]
     return re.findall(r"title: '(.*?)', setup: '(.*?)',\s*ask: '(.*?)', vote:", part)
-SHOWS = [('JEREMIAH', ''), ('EZEKIEL', 'ezekiel/')]  # array name in rounds.ts, clip folder
+SHOWS = [('JEREMIAH', ''), ('EZEKIEL', 'ezekiel/'), ('DANIEL', 'daniel/')]  # array name in rounds.ts, clip folder
 spoken = lambda t: t.replace(chr(92) + "'", "'").replace('🙂', 'smiley face').replace('1 a.m.', 'one A M').replace('a.m.', 'A M')
 
 LINES = {
@@ -30,7 +30,8 @@ for name, folder in SHOWS:
 
 async def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / 'ezekiel').mkdir(exist_ok=True)
+    for _, folder in SHOWS:
+        if folder: (OUT / folder).mkdir(exist_ok=True)
     import sys
     for k, t in LINES.items():
         if (OUT / f'{k}.mp3').exists() and '--force' not in sys.argv: continue  # only record what's missing
