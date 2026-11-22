@@ -1,12 +1,16 @@
-export type SpaceType = 'plain' | 'thankful' | 'scripture' | 'wander' | 'grace' | 'share' | 'home';
+export type Resource = 'faith' | 'mercy' | 'thanks' | 'word';
+export const RESOURCES: Resource[] = ['faith', 'mercy', 'thanks', 'word'];
+export const RESOURCE_ICON: Record<Resource, string> = { faith: '🙏', mercy: '💛', thanks: '🦃', word: '📖' };
+export const RESOURCE_NAME: Record<Resource, string> = { faith: 'Faith', mercy: 'Mercy', thanks: 'Thanks', word: 'Word' };
+
+export interface Tile { id: number; resource: Resource; number: number; label: string }
 
 export interface ScriptureCard { q: string; a: string }
 export interface GraceCard { text: string }
 
 export interface BoardDef {
   id: string; date: string; title: string;
-  /** Space type for index 0..size-2; the last index is always 'home'. */
-  spaces: SpaceType[];
+  tiles: Tile[];
   scriptureCards: ScriptureCard[];
   graceCards: GraceCard[];
 }
@@ -16,12 +20,19 @@ const HOSEA_JOEL: BoardDef = {
   id: 'hosea-joel',
   date: '2026-11-16',
   title: 'The Road Back Home',
-  spaces: [
-    'plain', 'thankful', 'scripture', 'plain', 'wander', 'grace',
-    'plain', 'share', 'scripture', 'thankful', 'plain', 'wander',
-    'grace', 'plain', 'scripture', 'share', 'thankful', 'plain',
-    'wander', 'scripture', 'plain', 'grace', 'thankful', 'plain',
-    'scripture', 'share', 'wander', 'thankful', 'scripture',
+  tiles: [
+    { id: 0, resource: 'faith', number: 2, label: 'Return' },
+    { id: 1, resource: 'mercy', number: 3, label: 'Promise' },
+    { id: 2, resource: 'thanks', number: 4, label: 'Thanksgiving' },
+    { id: 3, resource: 'word', number: 5, label: 'Scripture' },
+    { id: 4, resource: 'faith', number: 6, label: 'Return' },
+    { id: 5, resource: 'mercy', number: 8, label: 'Promise' },
+    { id: 6, resource: 'thanks', number: 9, label: 'Thanksgiving' },
+    { id: 7, resource: 'word', number: 10, label: 'Scripture' },
+    { id: 8, resource: 'faith', number: 11, label: 'Return' },
+    { id: 9, resource: 'mercy', number: 12, label: 'Promise' },
+    { id: 10, resource: 'thanks', number: 4, label: 'Thanksgiving' },
+    { id: 11, resource: 'word', number: 8, label: 'Scripture' },
   ],
   scriptureCards: [
     { q: 'God compares His love for us to what kind of relationship in Hosea?', a: 'A marriage — He loves us even when we stray. (Hosea 1-3)' },
@@ -57,16 +68,8 @@ export const isBoardGameWeek = (today = localToday()) => BOARDS.some((b) => {
   return days >= 0 && days < 7;
 });
 
-export const HOME_INDEX = (b: BoardDef) => b.spaces.length; // one past the last listed space
-export const spaceType = (b: BoardDef, pos: number): SpaceType => (pos >= HOME_INDEX(b) ? 'home' : b.spaces[pos]);
-
-/** Row-major reading order for a zigzag (boustrophedon) board, so a CSS grid auto-flow renders it as a snaking path. */
-export function snakeOrder(n: number, cols: number): number[] {
-  const order: number[] = [];
-  for (let start = 0, row = 0; start < n; start += cols, row++) {
-    const end = Math.min(start + cols, n);
-    const row_ = [...Array(end - start).keys()].map((i) => start + i);
-    order.push(...(row % 2 === 0 ? row_ : row_.reverse()));
-  }
-  return order;
-}
+export const MAX_SETTLERS_PER_TILE = 2;
+export const MAX_BUILDINGS_PER_PLAYER = 3;
+export const WIN_POINTS = 6;
+export const ALTAR_COST: Record<Resource, number> = { faith: 1, mercy: 1, thanks: 1, word: 1 };
+export const TEMPLE_COST: Partial<Record<Resource, number>> = { mercy: 2, word: 2 };

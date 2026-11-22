@@ -27,7 +27,15 @@ export function sfxGood() {
 export function sfxWander() {
   try { [392, 311].forEach((f, i) => tone(f, i * 0.12, 0.3, 'sawtooth', 0.12)); } catch { /* audio blocked */ }
 }
-/** Little fanfare when someone reaches home. */
+/** Little fanfare when someone reaches home / wins. */
 export function sfxHome() {
   try { [523, 659, 784, 1046].forEach((f, i) => tone(f, i * 0.11, 0.35, 'triangle', 0.2)); } catch { /* audio blocked */ }
+}
+/** Satisfying "thunk" when a building goes up. */
+export function sfxBuild() {
+  try { tone(220, 0, 0.1, 'square', 0.15); tone(440, 0.07, 0.18, 'triangle', 0.16); } catch { /* audio blocked */ }
+}
+/** Quick swap whoosh for a completed trade. */
+export function sfxTrade() {
+  try { [440, 554, 440].forEach((f, i) => tone(f, i * 0.07, 0.12, 'sine', 0.12)); } catch { /* audio blocked */ }
 }
