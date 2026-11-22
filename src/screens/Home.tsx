@@ -74,7 +74,7 @@ export default function Home() {
       {(isShowDay() || location.search.includes('gs=1')) &&
         <Link to="/gameshow"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>📺 Game Show is on! Bring {p.name} to class</button></Link>}
       {(isBoardGameWeek() || location.search.includes('bg=1')) &&
-        <Link to="/boardgame"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>🦃 Board Game! Bring {p.name} to class</button></Link>}
+        <Link to="/boardgame"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>🍏 Harvest Picks! Bring {p.name} to class</button></Link>}
       {painting ? <div className="card pop">
         <div className="swatches">
           {COLOR_NAMES.map((n, i) => {

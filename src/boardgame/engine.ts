@@ -1,177 +1,150 @@
-import {
-  boardFor, type BoardDef, type Resource, RESOURCES,
-  MAX_SETTLERS_PER_TILE, MAX_BUILDINGS_PER_PLAYER, WIN_POINTS, ALTAR_COST, TEMPLE_COST,
-} from './board';
+import { deckFor, HAND_SIZE, WIN_GREENS, type DeckDef } from './board';
 
-export type Phase = 'lobby' | 'settle' | 'playing' | 'finished';
-export type Hand = Record<Resource, number>;
-const emptyHand = (): Hand => ({ faith: 0, mercy: 0, thanks: 0, word: 0 });
+export type Phase = 'lobby' | 'playing' | 'judging' | 'reveal' | 'finished';
+export type Rand = () => number;
 
-export interface Player { id: string; name: string; species: string; color: number; resources: Hand; points: number }
-export interface Building { tileId: number; playerId: string; level: 1 | 2 }
-export type CardKind = 'scripture' | 'grace';
-export interface CardEvent { kind: CardKind; cardIdx: number }
-export interface TradeOffer { id: string; from: string; to: string | null; give: Partial<Hand>; want: Partial<Hand> }
+export interface Player { id: string; name: string; species: string; color: number; hand: number[]; greens: number[] }
+export interface Play { by: string; card: number }
 
 export interface Game {
-  boardId: string; phase: Phase;
-  players: Player[]; order: string[]; turnIdx: number;
-  buildings: Building[]; trades: TradeOffer[];
-  lastRoll: [number, number] | null; card: CardEvent | null;
+  deckId: string; phase: Phase;
+  players: Player[]; judgeIdx: number;
+  green: number | null; plays: Play[]; winner: Play | null;
+  redDeck: number[]; greenDeck: number[];
   winnerId: string | null;
 }
 
-export const newGame = (boardId = boardFor().id): Game =>
-  ({ boardId, phase: 'lobby', players: [], order: [], turnIdx: 0, buildings: [], trades: [], lastRoll: null, card: null, winnerId: null });
+const deck = (g: Game): DeckDef => deckFor(g.deckId);
+
+export function shuffle<T>(arr: T[], rand: Rand): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+export const newGame = (deckId = deckFor().id): Game => ({
+  deckId, phase: 'lobby', players: [], judgeIdx: 0, green: null, plays: [], winner: null, redDeck: [], greenDeck: [], winnerId: null,
+});
+
+/** Tops each hand back up to HAND_SIZE from the red deck. */
+function deal(players: Player[], redDeck: number[]): { players: Player[]; redDeck: number[] } {
+  let rest = redDeck;
+  const out = players.map((p) => {
+    const need = Math.max(0, HAND_SIZE - p.hand.length);
+    const hand = [...p.hand, ...rest.slice(0, need)];
+    rest = rest.slice(need);
+    return { ...p, hand };
+  });
+  return { players: out, redDeck: rest };
+}
+
+function flipGreen(g: Game, rand: Rand): Game {
+  let greenDeck = g.greenDeck;
+  if (greenDeck.length === 0) {
+    const held = new Set(g.players.flatMap((p) => p.greens));
+    greenDeck = shuffle(deck(g).greens.map((_, i) => i).filter((i) => !held.has(i)), rand);
+  }
+  return { ...g, green: greenDeck[0] ?? null, greenDeck: greenDeck.slice(1) };
+}
 
 export function addPlayer(g: Game, p: { id: string; name: string; species: string; color: number }): Game {
   if (g.players.some((x) => x.id === p.id)) return g;
-  return { ...g, players: [...g.players, { ...p, resources: emptyHand(), points: 0 }], order: [...g.order, p.id] };
+  const joined = { ...p, hand: [] as number[], greens: [] as number[] };
+  if (g.phase === 'lobby') return { ...g, players: [...g.players, joined] };
+  // A late joiner gets a hand right away and can play this round.
+  const dealt = deal([joined], g.redDeck);
+  return { ...g, players: [...g.players, dealt.players[0]], redDeck: dealt.redDeck };
 }
 
-export function start(g: Game): Game {
-  if (g.phase !== 'lobby' || g.players.length === 0) return g;
-  return { ...g, phase: 'settle', turnIdx: 0 };
+export const MIN_PLAYERS = 3;
+
+export function start(g: Game, rand: Rand = Math.random): Game {
+  if (g.phase !== 'lobby' && g.phase !== 'finished') return g;
+  if (g.players.length < MIN_PLAYERS) return g;
+  const d = deck(g);
+  const fresh = g.players.map((p) => ({ ...p, hand: [], greens: [] }));
+  const dealt = deal(fresh, shuffle(d.reds.map((_, i) => i), rand));
+  const base: Game = {
+    ...g, phase: 'playing', players: dealt.players, redDeck: dealt.redDeck, judgeIdx: 0,
+    greenDeck: shuffle(d.greens.map((_, i) => i), rand), plays: [], winner: null, winnerId: null,
+  };
+  return flipGreen(base, rand);
 }
 
-const board = (g: Game): BoardDef => boardFor(g.boardId);
-const tileSettlers = (g: Game, tileId: number) => g.buildings.filter((b) => b.tileId === tileId).length;
-const playerBuildings = (g: Game, playerId: string) => g.buildings.filter((b) => b.playerId === playerId);
+export const judgeId = (g: Game): string | null => g.players[g.judgeIdx % Math.max(1, g.players.length)]?.id ?? null;
+const pickers = (g: Game) => g.players.filter((p) => p.id !== judgeId(g));
+export const allIn = (g: Game) => pickers(g).every((p) => g.plays.some((x) => x.by === p.id));
 
-export function currentId(g: Game): string | null {
-  if ((g.phase !== 'playing' && g.phase !== 'settle') || g.order.length === 0) return null;
-  return g.order[g.turnIdx % g.order.length];
-}
-
-/** Settle phase: each player picks one tile for their first Altar, in turn order. */
-export function settle(g: Game, playerId: string, tileId: number): Game {
-  if (g.phase !== 'settle' || currentId(g) !== playerId) return g;
-  if (playerBuildings(g, playerId).length > 0) return g;
-  const b = board(g);
-  if (!b.tiles.some((t) => t.id === tileId)) return g;
-  if (tileSettlers(g, tileId) >= MAX_SETTLERS_PER_TILE) return g;
-  const players = g.players.map((p) => (p.id === playerId ? { ...p, points: p.points + 1 } : p));
-  const buildings = [...g.buildings, { tileId, playerId, level: 1 as const }];
-  const turnIdx = g.turnIdx + 1;
-  const done = players.every((p) => playerBuildings({ ...g, buildings }, p.id).length > 0);
-  return { ...g, players, buildings, turnIdx: done ? 0 : turnIdx, phase: done ? 'playing' : 'settle' };
+/** Shuffles what's been played and hands it to the judge. */
+export function closePlays(g: Game, rand: Rand = Math.random): Game {
+  if (g.phase !== 'playing' || g.plays.length === 0) return g;
+  return { ...g, phase: 'judging', plays: shuffle(g.plays, rand) };
 }
 
-function hasEnough(hand: Hand, cost: Partial<Hand>): boolean {
-  return (Object.keys(cost) as Resource[]).every((r) => hand[r] >= (cost[r] ?? 0));
-}
-function pay(hand: Hand, cost: Partial<Hand>): Hand {
-  const h = { ...hand };
-  for (const r of Object.keys(cost) as Resource[]) h[r] -= cost[r] ?? 0;
-  return h;
-}
-function give(hand: Hand, amt: Partial<Hand>): Hand {
-  const h = { ...hand };
-  for (const r of Object.keys(amt) as Resource[]) h[r] += amt[r] ?? 0;
-  return h;
+export function play(g: Game, id: string, card: number, rand: Rand = Math.random): Game {
+  if (g.phase !== 'playing' || id === judgeId(g) || g.plays.some((x) => x.by === id)) return g;
+  const p = g.players.find((x) => x.id === id);
+  if (!p || !p.hand.includes(card)) return g;
+  const next: Game = {
+    ...g,
+    players: g.players.map((x) => (x.id === id ? { ...x, hand: x.hand.filter((c) => c !== card) } : x)),
+    plays: [...g.plays, { by: id, card }],
+  };
+  return allIn(next) ? closePlays(next, rand) : next;
 }
 
-function checkWin(g: Game): Game {
-  const winner = g.players.find((p) => p.points >= WIN_POINTS);
-  return winner ? { ...g, phase: 'finished', winnerId: winner.id } : g;
+/** The judge picks a winning red card. The host passes the judge's id when picking for them. */
+export function pick(g: Game, by: string, card: number): Game {
+  if (g.phase !== 'judging' || by !== judgeId(g) || g.green === null) return g;
+  const win = g.plays.find((x) => x.card === card);
+  if (!win) return g;
+  const green = g.green;
+  const ps = g.players.map((p) => (p.id === win.by ? { ...p, greens: [...p.greens, green] } : p));
+  const champ = ps.find((p) => p.greens.length >= WIN_GREENS);
+  return { ...g, players: ps, winner: win, phase: champ ? 'finished' : 'reveal', winnerId: champ?.id ?? null };
 }
 
-/** Roll two dice. A 7 draws a scripture/grace card for the whole class instead of producing resources. */
-export function roll(g: Game, id: string, die1: number, die2: number): Game {
-  if (g.phase !== 'playing' || g.card || currentId(g) !== id) return g;
-  const sum = die1 + die2;
-  if (sum === 7) {
-    const kind: CardKind = Math.random() < 0.5 ? 'scripture' : 'grace';
-    const b = board(g);
-    const n = kind === 'scripture' ? b.scriptureCards.length : b.graceCards.length;
-    return { ...g, lastRoll: [die1, die2], card: { kind, cardIdx: Math.floor(Math.random() * n) } };
-  }
-  const b = board(g);
-  const matching = b.tiles.filter((t) => t.number === sum);
-  let players = g.players;
-  for (const t of matching) {
-    for (const bld of g.buildings.filter((x) => x.tileId === t.id)) {
-      players = players.map((p) => (p.id === bld.playerId ? { ...p, resources: give(p.resources, { [t.resource]: bld.level }) } : p));
-    }
-  }
-  return { ...g, players, lastRoll: [die1, die2], turnIdx: g.turnIdx + 1 };
+/** Next round: played reds go to the bottom of the deck, hands refill, the judge rotates, a new green flips. */
+export function next(g: Game, rand: Rand = Math.random): Game {
+  if (g.phase !== 'reveal') return g;
+  const dealt = deal(g.players, [...g.redDeck, ...g.plays.map((x) => x.card)]);
+  return flipGreen({
+    ...g, phase: 'playing', players: dealt.players, redDeck: dealt.redDeck,
+    judgeIdx: (g.judgeIdx + 1) % g.players.length, plays: [], winner: null,
+  }, rand);
 }
 
-/** Clears the whole-class card event after a 7 and advances the turn. */
-export function continueCard(g: Game): Game {
-  if (!g.card) return g;
-  return { ...g, card: null, turnIdx: g.turnIdx + 1 };
-}
-
-export function build(g: Game, playerId: string, tileId: number): Game {
-  if (g.phase !== 'playing') return g;
-  const player = g.players.find((p) => p.id === playerId);
-  if (!player) return g;
-  if (playerBuildings(g, playerId).length >= MAX_BUILDINGS_PER_PLAYER) return g;
-  if (tileSettlers(g, tileId) >= MAX_SETTLERS_PER_TILE) return g;
-  if (!hasEnough(player.resources, ALTAR_COST)) return g;
-  const players = g.players.map((p) => (p.id === playerId ? { ...p, resources: pay(p.resources, ALTAR_COST), points: p.points + 1 } : p));
-  const buildings = [...g.buildings, { tileId, playerId, level: 1 as const }];
-  return checkWin({ ...g, players, buildings });
-}
-
-export function upgrade(g: Game, playerId: string, tileId: number): Game {
-  if (g.phase !== 'playing') return g;
-  const player = g.players.find((p) => p.id === playerId);
-  const bld = g.buildings.find((b) => b.tileId === tileId && b.playerId === playerId && b.level === 1);
-  if (!player || !bld) return g;
-  if (!hasEnough(player.resources, TEMPLE_COST)) return g;
-  const players = g.players.map((p) => (p.id === playerId ? { ...p, resources: pay(p.resources, TEMPLE_COST), points: p.points + 1 } : p));
-  const buildings = g.buildings.map((b) => (b === bld ? { ...b, level: 2 as const } : b));
-  return checkWin({ ...g, players, buildings });
-}
-
-export function proposeTrade(g: Game, from: string, give_: Partial<Hand>, want: Partial<Hand>, to: string | null, newId: () => string): Game {
-  if (g.phase !== 'playing') return g;
-  const player = g.players.find((p) => p.id === from);
-  if (!player || !hasEnough(player.resources, give_)) return g;
-  return { ...g, trades: [...g.trades, { id: newId(), from, to, give: give_, want }] };
-}
-
-export function cancelTrade(g: Game, offerId: string, playerId: string): Game {
-  const offer = g.trades.find((t) => t.id === offerId);
-  if (!offer || offer.from !== playerId) return g;
-  return { ...g, trades: g.trades.filter((t) => t.id !== offerId) };
-}
-
-export function acceptTrade(g: Game, offerId: string, accepterId: string): Game {
-  const offer = g.trades.find((t) => t.id === offerId);
-  if (!offer || offer.from === accepterId || (offer.to && offer.to !== accepterId)) return g;
-  const seller = g.players.find((p) => p.id === offer.from);
-  const buyer = g.players.find((p) => p.id === accepterId);
-  if (!seller || !buyer || !hasEnough(seller.resources, offer.give) || !hasEnough(buyer.resources, offer.want)) return g;
-  const players = g.players.map((p) => {
-    if (p.id === offer.from) return { ...p, resources: give(pay(p.resources, offer.give), offer.want) };
-    if (p.id === accepterId) return { ...p, resources: give(pay(p.resources, offer.want), offer.give) };
-    return p;
-  });
-  return { ...g, players, trades: g.trades.filter((t) => t.id !== offerId) };
-}
-
-const PROMPT: Record<CardKind, string> = { scripture: 'Scripture Card! Read it to the group.', grace: "Fresh Start! Read God's promise out loud." };
-export interface PublicCard { kind: CardKind; prompt: string; q?: string; a?: string }
-export function cardPublic(g: Game): PublicCard | null {
-  if (!g.card) return null;
-  const b = board(g);
-  const { kind, cardIdx } = g.card;
-  if (kind === 'scripture') { const c = b.scriptureCards[cardIdx]; return { kind, prompt: PROMPT.scripture, q: c.q, a: c.a }; }
-  const c = b.graceCards[cardIdx]; return { kind, prompt: PROMPT.grace, q: c.text };
+/** Drops a player (left class, phone died). If they were judging, the next player takes over. */
+export function removePlayer(g: Game, id: string): Game {
+  const i = g.players.findIndex((p) => p.id === id);
+  if (i < 0) return g;
+  const wasJudge = judgeId(g) === id;
+  const left = g.players[i];
+  const ps = g.players.filter((p) => p.id !== id);
+  const judgeIdx = ps.length === 0 ? 0 : (i < g.judgeIdx ? g.judgeIdx - 1 : g.judgeIdx) % ps.length;
+  // Their cards go back in the deck so nothing is lost.
+  const back = [...left.hand, ...g.plays.filter((x) => x.by === id).map((x) => x.card)];
+  const out: Game = { ...g, players: ps, judgeIdx, plays: g.plays.filter((x) => x.by !== id), redDeck: [...g.redDeck, ...back] };
+  return wasJudge && out.phase === 'judging' ? { ...out, phase: 'playing' } : out;
 }
 
 export function toPublic(g: Game) {
-  const b = board(g);
+  const d = deck(g);
+  const showBy = g.phase === 'reveal' || g.phase === 'finished';
+  const red = (card: number) => ({ card, text: d.reds[card] });
   return {
-    boardId: b.id, title: b.title, phase: g.phase,
-    tiles: b.tiles.map((t) => ({ ...t, settlers: g.buildings.filter((x) => x.tileId === t.id).map((x) => ({ playerId: x.playerId, level: x.level })) })),
-    players: g.players, currentId: currentId(g), lastRoll: g.lastRoll, card: cardPublic(g),
-    trades: g.trades, winnerId: g.winnerId,
+    deckId: d.id, title: d.title, phase: g.phase, judgeId: judgeId(g), winTarget: WIN_GREENS,
+    green: g.green === null ? null : d.greens[g.green],
+    players: g.players.map((p) => ({
+      id: p.id, name: p.name, species: p.species, color: p.color,
+      greens: p.greens.map((i) => d.greens[i].word),
+      played: g.plays.some((x) => x.by === p.id),
+      hand: p.hand.map(red),
+    })),
+    // Anonymous while the judge decides; names show on the reveal.
+    plays: g.phase === 'playing' ? [] : g.plays.map((x) => ({ ...red(x.card), by: showBy ? x.by : null })),
+    winner: g.winner ? { ...red(g.winner.card), by: g.winner.by } : null,
+    winnerId: g.winnerId,
   };
 }
-
-export const RESOURCE_LIST = RESOURCES;
 export type PublicState = ReturnType<typeof toPublic>;

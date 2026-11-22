@@ -1,16 +1,11 @@
 import { supabase } from '../lib/supabase';
-import type { Player, Hand, PublicState } from './engine';
+import type { PublicState } from './engine';
 
 export type ToHost =
-  | { t: 'hello'; p: Omit<Player, 'resources' | 'points'> }
-  | { t: 'roll'; id: string; die1: number; die2: number }
-  | { t: 'settle'; id: string; tileId: number }
-  | { t: 'build'; id: string; tileId: number }
-  | { t: 'upgrade'; id: string; tileId: number }
-  | { t: 'continueCard'; id: string }
-  | { t: 'proposeTrade'; id: string; give: Partial<Hand>; want: Partial<Hand>; to: string | null }
-  | { t: 'cancelTrade'; id: string; offerId: string }
-  | { t: 'acceptTrade'; id: string; offerId: string };
+  | { t: 'hello'; p: { id: string; name: string; species: string; color: number } }
+  | { t: 'play'; id: string; card: number }
+  | { t: 'pick'; id: string; card: number }
+  | { t: 'next'; id: string };
 
 export interface Wire {
   sendToHost(m: ToHost): void;

@@ -5,21 +5,21 @@ import { useSession, isStudentEmail } from '../../lib/useSession';
 import Pet from '../../pet/Pet';
 import Confetti from '../../pet/Confetti';
 import type { SpeciesId } from '../../domain/species';
-import { boardFor, RESOURCE_ICON, RESOURCE_NAME, WIN_POINTS, type Resource } from '../../boardgame/board';
+import { deckFor } from '../../boardgame/board';
 import {
-  newGame, addPlayer, start, settle, roll, continueCard, build, upgrade, proposeTrade, cancelTrade, acceptTrade,
-  toPublic, type Game, type Hand,
+  newGame, addPlayer, start, play, closePlays, pick, next, removePlayer, judgeId, toPublic, MIN_PLAYERS, type Game,
 } from '../../boardgame/engine';
 import { openWire, type Wire } from '../../boardgame/channel';
-import { sfxDiceRoll, sfxGood, sfxWander, sfxHome } from '../../boardgame/sfx';
+import { sfxPlay, sfxFlip, sfxWin, sfxChampion } from '../../boardgame/sfx';
 import '../../boardgame/boardgame.css';
 
 const key = (classId: string) => `bg-host-${classId}`;
-let counter = 0;
-const newId = () => `${Date.now().toString(36)}${(counter++).toString(36)}${Math.random().toString(36).slice(2, 5)}`;
-function load(classId: string, boardId: string): Game {
-  try { const r = localStorage.getItem(key(classId)); if (r) { const g = JSON.parse(r) as Game; if (g.boardId === boardId) return g; } } catch { /* fresh game */ }
-  return newGame(boardId);
+function load(classId: string, deckId: string): Game {
+  try {
+    const r = localStorage.getItem(key(classId));
+    if (r) { const g = JSON.parse(r) as Game; if (g.deckId === deckId && Array.isArray(g.redDeck)) return g; }
+  } catch { /* fresh game */ }
+  return newGame(deckId);
 }
 
 export default function BoardGameHost() {
@@ -41,63 +41,40 @@ export default function BoardGameHost() {
 }
 
 function Stage({ classId, code }: { classId: string; code: string }) {
-  const b = boardFor();
-  const [game, setGame] = useState<Game>(() => load(classId, b.id));
+  const d = deckFor();
+  const [game, setGame] = useState<Game>(() => load(classId, d.id));
   const ref = useRef(game);
   const wire = useRef<Wire | null>(null);
-  const [rollingFor, setRollingFor] = useState<string | null>(null);
   const [burst, setBurst] = useState(0);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const publish = () => wire.current?.sendState(toPublic(ref.current));
   const update = (f: (g: Game) => Game) => {
-    const n = f(ref.current);
-    if (n === ref.current) return;
+    const before = ref.current;
+    const n = f(before);
+    if (n === before) return;
     ref.current = n; setGame(n);
     try { localStorage.setItem(key(classId), JSON.stringify(n)); } catch { /* storage full or blocked */ }
     publish();
+    if (before.phase === 'playing' && n.phase === 'judging') sfxFlip();
+    else if (n.phase === 'reveal' && before.phase !== 'reveal') { sfxWin(); setBurst((x) => x + 1); }
+    else if (n.phase === 'finished' && before.phase !== 'finished') { sfxChampion(); setBurst((x) => x + 1); }
+    else if (n.plays.length > before.plays.length) sfxPlay();
   };
-
-  const doSettle = (id: string, tileId: number) => update((g) => settle(g, id, tileId));
-
-  const doRoll = (id: string) => {
-    if (rollingFor) return;
-    const g0 = ref.current;
-    if (toPublic(g0).currentId !== id || g0.card) return;
-    setRollingFor(id);
-    sfxDiceRoll(6);
-    timer.current = setTimeout(() => {
-      setRollingFor(null);
-      const die1 = 1 + Math.floor(Math.random() * 6), die2 = 1 + Math.floor(Math.random() * 6);
-      const before = ref.current;
-      update((g) => roll(g, id, die1, die2));
-      const after = ref.current;
-      const total = (p: typeof after.players[number]) => Object.values(p.resources).reduce((a, x) => a + x, 0);
-      const gained = after.players.reduce((n, p) => n + total(p), 0) - before.players.reduce((n, p) => n + total(p), 0);
-      if (after.card) sfxWander();
-      else if (gained > 0) { sfxGood(); setBurst((n) => n + 1); }
-    }, 650);
-  };
-  const restart = () => update(() => newGame(b.id));
 
   useEffect(() => {
     const w = openWire(classId, (m) => {
       if (m.t === 'hello') update((g) => addPlayer(g, m.p));
-      else if (m.t === 'settle') doSettle(m.id, m.tileId);
-      else if (m.t === 'roll') doRoll(m.id);
-      else if (m.t === 'continueCard') update(continueCard);
-      else if (m.t === 'build') { const before = ref.current; update((g) => build(g, m.id, m.tileId)); if (ref.current !== before) { sfxGood(); setBurst((n) => n + 1); if (ref.current.phase === 'finished') sfxHome(); } }
-      else if (m.t === 'upgrade') { const before = ref.current; update((g) => upgrade(g, m.id, m.tileId)); if (ref.current !== before) { sfxGood(); setBurst((n) => n + 1); if (ref.current.phase === 'finished') sfxHome(); } }
-      else if (m.t === 'proposeTrade') update((g) => proposeTrade(g, m.id, m.give, m.want, m.to, newId));
-      else if (m.t === 'cancelTrade') update((g) => cancelTrade(g, m.offerId, m.id));
-      else if (m.t === 'acceptTrade') { const before = ref.current; update((g) => acceptTrade(g, m.offerId, m.id)); if (ref.current !== before) sfxGood(); }
+      else if (m.t === 'play') update((g) => play(g, m.id, m.card));
+      else if (m.t === 'pick') update((g) => pick(g, m.id, m.card));
+      else if (m.t === 'next') update((g) => (m.id === judgeId(g) || g.winner?.by === m.id ? next(g) : g));
+      if (m.t === 'hello') publish();
     }, () => {}, publish);
     wire.current = w;
     const beat = setInterval(publish, 3000);
-    return () => { clearInterval(beat); w.close(); if (timer.current) clearTimeout(timer.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classId]);
+    return () => { clearInterval(beat); w.close(); };
+  }, [classId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Keep the laptop awake while the game is on the TV.
   useEffect(() => {
     let lock: { release: () => Promise<void> } | null = null;
     const get = () => (navigator as unknown as { wakeLock?: { request: (t: 'screen') => Promise<typeof lock> } }).wakeLock?.request('screen')
@@ -110,137 +87,101 @@ function Stage({ classId, code }: { classId: string; code: string }) {
 
   const g = game;
   const pub = toPublic(g);
-  const currentPlayer = g.players.find((p) => p.id === pub.currentId);
-  const standings = [...g.players].sort((x, y) => y.points - x.points);
+  const judge = pub.players.find((p) => p.id === pub.judgeId);
+  const nameOf = (id: string | null) => pub.players.find((p) => p.id === id)?.name ?? '?';
+  const waitingOn = pub.players.filter((p) => p.id !== pub.judgeId && !p.played);
+  const champ = pub.players.find((p) => p.id === pub.winnerId);
+  const greenCard = pub.green && (
+    <div className="bg-green"><small>{judge ? `${judge.name.toUpperCase()} IS JUDGING` : 'THE WORD IS'}</small><b>{pub.green.word}</b></div>
+  );
 
   return (
     <div className="bg bg-tv">
       {burst > 0 && <Confetti key={burst} />}
-      <div className="bg-logo">{b.title.toUpperCase()}</div>
-      <p className="bg-sub">Class code <b className="bg-code">{code}</b> · open Tend on your phone and tap <b>Board Game</b></p>
+      <div className="bg-logo">{d.title.toUpperCase()}</div>
+      <p className="bg-sub">Class code <b className="bg-code">{code}</b> · open Tend and tap <b>Harvest Picks</b></p>
 
       {g.phase === 'lobby' && (
         <div className="bg-center">
-          <p className="bg-big">Grab your tokens!</p>
+          <p className="bg-big">Grab your phone</p>
+          <p className="bg-sub">Each round one person judges a word. Everyone else plays the card from their hand that fits it best.
+            The judge picks a favorite. First to {pub.winTarget} words wins.</p>
           <div className="bg-players">
             {g.players.length === 0 && <span className="bg-sub">Waiting for players…</span>}
             {g.players.map((p) => <Avatar key={p.id} p={p} />)}
           </div>
-          <button className="bg-go main" onClick={() => update(start)} disabled={g.players.length === 0}>Start the game ▸</button>
+          <button className="bg-go main" onClick={() => update((x) => start(x))} disabled={g.players.length < MIN_PLAYERS}>
+            {g.players.length < MIN_PLAYERS ? `Need ${MIN_PLAYERS - g.players.length} more` : 'Deal the cards ▸'}
+          </button>
+        </div>
+      )}
+
+      {g.phase === 'playing' && (
+        <div className="bg-center">
+          {greenCard}
+          <p className="bg-sub">Pick the card from your hand that's most <b>{pub.green?.word.toLowerCase()}</b>.</p>
+          <div className="bg-reds">{pub.players.filter((p) => p.played).map((p) => <div key={p.id} className="bg-facedown" />)}</div>
+          <p className="bg-sub">{waitingOn.length === 0 ? 'Everyone is in!' : `Waiting on ${waitingOn.map((p) => p.name).join(', ')}`}</p>
+        </div>
+      )}
+
+      {g.phase === 'judging' && (
+        <div className="bg-center">
+          {greenCard}
+          <p className="bg-sub">{judge?.name}, read each card out loud, then pick your favorite on your phone.</p>
+          <div className="bg-reds flip">
+            {pub.plays.map((c) => (
+              <div key={c.card} className="bg-red pickable" title="Pick for the judge"
+                onClick={() => update((x) => pick(x, judgeId(x) ?? '', c.card))}>{c.text}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(g.phase === 'reveal' || g.phase === 'finished') && pub.winner && (
+        <div className="bg-center">
+          <div className="bg-green small"><b>{pub.green?.word}</b></div>
+          {g.phase === 'finished' && champ
+            ? <p className="bg-big">{champ.name} wins the game! 🏆</p>
+            : <p className="bg-big">{nameOf(pub.winner.by)} gets it!</p>}
+          <div className="bg-reds">
+            {pub.plays.map((c) => (
+              <div key={c.card} className={`bg-red ${c.card === pub.winner!.card ? 'win' : 'dim'}`}>{c.text}<small>{nameOf(c.by)}</small></div>
+            ))}
+          </div>
+          {pub.green?.lens && <p className="bg-lens">“{pub.green.lens.text}”<b>{pub.green.lens.ref}</b></p>}
         </div>
       )}
 
       {g.phase !== 'lobby' && (
-        <>
-          <Tiles g={g} onPick={g.phase === 'settle' && currentPlayer ? (tileId) => doSettle(currentPlayer.id, tileId) : undefined} />
-
-          {g.phase === 'settle' && currentPlayer && (
-            <p className="bg-sub">{currentPlayer.name}, tap a tile to build your first Altar there (or do it from your phone).</p>
-          )}
-
-          {g.phase === 'playing' && (
-            <div className="bg-standings">
-              {standings.map((p) => (
-                <div key={p.id} className={`bg-stand-row ${p.id === pub.currentId ? 'current' : ''}`}>
-                  <span className="bg-stand-rank">{standings[0].id === p.id && p.points > 0 ? '👑' : ''}</span>
-                  <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={26} animate={false} />
-                  <span className="bg-stand-name">{p.name}</span>
-                  <div className="bg-stand-bar"><div className="bg-stand-fill" style={{ width: `${Math.min(100, (p.points / WIN_POINTS) * 100)}%` }} /></div>
-                  <span className="bg-stand-pts">{p.points}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {g.phase === 'playing' && !pub.card && currentPlayer && (
-            <div className="bg-turn">
-              <p className="bg-big">{currentPlayer.name}'s turn</p>
-              <button className={`bg-die ${rollingFor ? 'spin' : ''}`} onClick={() => doRoll(currentPlayer.id)} disabled={!!rollingFor}>
-                {rollingFor ? '🎲 🎲' : pub.lastRoll ? `🎲${pub.lastRoll[0]} 🎲${pub.lastRoll[1]}` : '🎲 🎲'}
-              </button>
-              <p className="bg-sub">Tap to roll for {currentPlayer.name}, or they roll from their own phone</p>
-            </div>
-          )}
-
-          {pub.card && (
-            <div className="bg-card">
-              <p className="bg-tag">{pub.card.prompt}</p>
-              {pub.card.q && <p className="bg-ask">{pub.card.q}</p>}
-              {pub.card.a && <p className="bg-answer">{pub.card.a}</p>}
-              <button className="bg-go main" onClick={() => update(continueCard)}>Continue ▸</button>
-            </div>
-          )}
-
-          {g.trades.length > 0 && g.phase === 'playing' && (
-            <div className="bg-trades">
-              {g.trades.map((t) => {
-                const from = g.players.find((p) => p.id === t.from)?.name ?? '?';
-                const to = t.to ? g.players.find((p) => p.id === t.to)?.name : 'anyone';
-                return (
-                  <div key={t.id} className="bg-trade-card">
-                    <b>{from}</b> offers {fmtHand(t.give)} for {fmtHand(t.want)} {t.to ? `with ${to}` : '(open to anyone)'}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {g.phase === 'finished' && (
-            <div className="bg-center">
-              <p className="bg-big">{g.players.find((p) => p.id === g.winnerId)?.name} wins! 🏆</p>
-              <div className="bg-players">{standings.map((p) => <Avatar key={p.id} p={p} points={p.points} />)}</div>
-            </div>
-          )}
-        </>
+        <div className="bg-players bottom">
+          {pub.players.map((p) => (
+            <Avatar key={p.id} p={p} small score={p.greens.length} judge={p.id === pub.judgeId}
+              done={g.phase === 'playing' && p.played} onRemove={() => { if (confirm(`Take ${p.name} out of the game?`)) update((x) => removePlayer(x, p.id)); }} />
+          ))}
+        </div>
       )}
 
       <div className="bg-controls">
-        {g.phase !== 'lobby' && <button className="bg-mini" onClick={() => { if (confirm('Start the whole game over?')) restart(); }}>↺ Restart</button>}
+        {g.phase === 'playing' && g.plays.length > 0 && waitingOn.length > 0 &&
+          <button className="bg-go" onClick={() => update((x) => closePlays(x))}>Flip cards now ▸</button>}
+        {g.phase === 'reveal' && <button className="bg-go main" onClick={() => update((x) => next(x))}>Next round ▸</button>}
+        {g.phase === 'finished' && <button className="bg-go main" onClick={() => update((x) => start(x))}>Play again ▸</button>}
+        {g.phase !== 'lobby' && <button className="bg-mini" onClick={() => { if (confirm('Start over from the lobby?')) update((x) => ({ ...newGame(d.id), players: x.players.map((p) => ({ ...p, hand: [], greens: [] })) })); }}>↺ Restart</button>}
       </div>
     </div>
   );
 }
 
-function fmtHand(h: Partial<Hand>) {
-  const parts = (Object.keys(h) as Resource[]).filter((r) => h[r]).map((r) => `${h[r]} ${RESOURCE_ICON[r]} ${RESOURCE_NAME[r]}`);
-  return parts.length ? parts.join(' + ') : 'nothing';
-}
-
-function Tiles({ g, onPick }: { g: Game; onPick?: (tileId: number) => void }) {
-  const b = boardFor(g.boardId);
+function Avatar({ p, small, score, judge, done, onRemove }: {
+  p: { name: string; species: string; color: number }; small?: boolean; score?: number; judge?: boolean; done?: boolean; onRemove?: () => void;
+}) {
   return (
-    <div className="bg-tiles">
-      {b.tiles.map((t) => {
-        const settlers = g.buildings.filter((x) => x.tileId === t.id);
-        const full = settlers.length >= 2;
-        const pickable = !!onPick && !full;
-        return (
-          <div key={t.id} className={`bg-tile bg-${t.resource} ${pickable ? 'bg-pickable' : ''} ${full ? 'bg-full' : ''}`}
-            onClick={pickable ? () => onPick!(t.id) : undefined}>
-            <span className="bg-tile-icon">{RESOURCE_ICON[t.resource]}</span>
-            <span className="bg-tile-num">{t.number}</span>
-            <span className="bg-tile-label">{t.label}</span>
-            <div className="bg-tile-settlers">
-              {settlers.map((s) => {
-                const p = g.players.find((x) => x.id === s.playerId);
-                if (!p) return null;
-                return <span key={s.playerId} className={`bg-settler ${s.level === 2 ? 'bg-temple' : ''}`}>
-                  <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={22} animate={false} />
-                </span>;
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function Avatar({ p, points }: { p: { name: string; species: string; color: number }; points?: number }) {
-  return (
-    <div className="bg-av">
-      <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={90} animate={false} />
-      <span>{p.name}{points !== undefined ? ` · ${points}pt` : ''}</span>
+    <div className={`bg-av ${small ? 'small' : ''} ${judge ? 'judge' : ''} ${done ? 'done' : ''}`} onDoubleClick={onRemove}>
+      {judge && <span className="bg-gavel">⚖️</span>}
+      {score !== undefined && score > 0 && <span className="bg-score">{score}</span>}
+      <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={small ? 48 : 90} animate={false} />
+      <span>{p.name}</span>
     </div>
   );
 }
