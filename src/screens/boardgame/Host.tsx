@@ -3,10 +3,12 @@ import { Navigate, useSearchParams } from 'react-router';
 import { supabase } from '../../lib/supabase';
 import { useSession, isStudentEmail } from '../../lib/useSession';
 import Pet from '../../pet/Pet';
+import Confetti from '../../pet/Confetti';
 import type { SpeciesId } from '../../domain/species';
 import { boardFor, spaceType, HOME_INDEX, snakeOrder, type SpaceType } from '../../boardgame/board';
-import { newGame, addPlayer, start, roll, resolvePending, toPublic, type Game } from '../../boardgame/engine';
+import { newGame, addPlayer, start, roll, resolvePending, toPublic, type Game, type Player } from '../../boardgame/engine';
 import { openWire, type Wire } from '../../boardgame/channel';
+import { sfxDiceRoll, sfxGood, sfxWander, sfxHome } from '../../boardgame/sfx';
 import '../../boardgame/boardgame.css';
 
 const key = (classId: string) => `bg-host-${classId}`;
@@ -18,6 +20,8 @@ function load(classId: string, boardId: string): Game {
 const SPACE_LABEL: Record<SpaceType, string> = {
   plain: '', thankful: '🦃', scripture: '📖', wander: '🧭', grace: '🕊️', share: '💬', home: '🏡',
 };
+const STEP_MS = 160;
+const MEDALS = ['🥇', '🥈', '🥉'];
 
 export default function BoardGameHost() {
   const session = useSession();
@@ -39,9 +43,16 @@ export default function BoardGameHost() {
 
 function Stage({ classId, code }: { classId: string; code: string }) {
   const b = boardFor();
+  const home = HOME_INDEX(b);
   const [game, setGame] = useState<Game>(() => load(classId, b.id));
   const ref = useRef(game);
   const wire = useRef<Wire | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Purely cosmetic: hops the roller's token across the board before the real state lands.
+  const [anim, setAnim] = useState<{ id: string; pos: number } | null>(null);
+  const [rollingFor, setRollingFor] = useState<string | null>(null);
+  const [burst, setBurst] = useState(0); // bump to retrigger confetti
 
   const publish = () => wire.current?.sendState(toPublic(ref.current));
   const update = (f: (g: Game) => Game) => {
@@ -52,7 +63,34 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     publish();
   };
 
-  const doRoll = (id: string) => update((g) => roll(g, id, 1 + Math.floor(Math.random() * 6)));
+  const commitRoll = (id: string, die: number) => {
+    const before = ref.current;
+    update((g) => roll(g, id, die));
+    const after = ref.current;
+    if (after.finishedOrder.length > before.finishedOrder.length) { sfxHome(); setBurst((n) => n + 1); }
+    else if (after.pending?.kind === 'wander') sfxWander();
+    else if (after.pending) { sfxGood(); setBurst((n) => n + 1); }
+  };
+
+  const doRoll = (id: string) => {
+    if (anim || rollingFor) return;
+    const g0 = ref.current;
+    const player = g0.players.find((p) => p.id === id);
+    if (!player || g0.pending || toPublic(g0).currentId !== id) return;
+    const die = 1 + Math.floor(Math.random() * 6);
+    const path = Array.from({ length: die }, (_, s) => Math.min(player.pos + s + 1, home));
+    sfxDiceRoll(die);
+    setRollingFor(id);
+    let i = 0;
+    const step = () => {
+      setAnim({ id, pos: path[i] });
+      i++;
+      timer.current = setTimeout(i < path.length ? step : () => {
+        setAnim(null); setRollingFor(null); commitRoll(id, die);
+      }, STEP_MS);
+    };
+    step();
+  };
   const restart = () => update(() => newGame(b.id));
 
   useEffect(() => {
@@ -62,7 +100,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
     }, () => {}, publish);
     wire.current = w;
     const beat = setInterval(publish, 3000);
-    return () => { clearInterval(beat); w.close(); };
+    return () => { clearInterval(beat); w.close(); if (timer.current) clearTimeout(timer.current); };
   }, [classId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -78,11 +116,13 @@ function Stage({ classId, code }: { classId: string; code: string }) {
   const g = game;
   const pub = toPublic(g);
   const currentPlayer = g.players.find((p) => p.id === pub.currentId);
-  const home = HOME_INDEX(b);
   const cells = snakeOrder(home + 1, 6); // 0..home, in zigzag reading order
+  const posFor = (p: Player) => (anim && anim.id === p.id ? anim.pos : p.pos);
+  const standings = [...g.players].sort((x, y) => posFor(y) - posFor(x));
 
   return (
     <div className="bg bg-tv">
+      {burst > 0 && <Confetti key={burst} />}
       <div className="bg-logo">{b.title.toUpperCase()}</div>
       <p className="bg-sub">Class code <b className="bg-code">{code}</b> · open Tend on your phone and tap <b>Board Game</b></p>
 
@@ -102,22 +142,34 @@ function Stage({ classId, code }: { classId: string; code: string }) {
           <div className="bg-board">
             {cells.map((i) => {
               const type = spaceType(b, i);
-              const here = g.players.filter((p) => p.pos === i);
+              const here = g.players.filter((p) => posFor(p) === i);
               return (
-                <div key={i} className={`bg-cell bg-${type}`}>
+                <div key={i} className={`bg-cell bg-${type} ${here.length ? 'bg-occupied' : ''}`}>
                   <span className="bg-icon">{SPACE_LABEL[type]}</span>
-                  <div className="bg-tokens">{here.map((p) => <Token key={p.id} p={p} />)}</div>
+                  <div className="bg-tokens">{here.map((p) => <Token key={p.id} p={p} hopping={anim?.id === p.id} />)}</div>
                 </div>
               );
             })}
           </div>
 
+          <div className="bg-standings">
+            {standings.map((p, i) => (
+              <div key={p.id} className={`bg-stand-row ${p.id === pub.currentId ? 'current' : ''}`}>
+                <span className="bg-stand-rank">{i === 0 && posFor(p) > 0 ? '👑' : ''}</span>
+                <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={26} animate={false} />
+                <span className="bg-stand-name">{p.name}</span>
+                <div className="bg-stand-bar"><div className="bg-stand-fill" style={{ width: `${Math.min(100, (posFor(p) / home) * 100)}%` }} /></div>
+              </div>
+            ))}
+          </div>
+
           {!pub.pending && pub.phase === 'playing' && currentPlayer && (
             <div className="bg-turn">
               <p className="bg-big">{currentPlayer.name}'s turn</p>
-              {pub.lastDie !== null && <p className="bg-sub">Last roll: 🎲 {pub.lastDie}</p>}
-              <button className="bg-go main" onClick={() => doRoll(currentPlayer.id)}>Roll for {currentPlayer.name} 🎲</button>
-              <p className="bg-sub">(or they roll from their own phone)</p>
+              <button className={`bg-die ${rollingFor ? 'spin' : ''}`} onClick={() => doRoll(currentPlayer.id)} disabled={!!rollingFor}>
+                {rollingFor ? '🎲' : pub.lastDie !== null ? pub.lastDie : '🎲'}
+              </button>
+              <p className="bg-sub">Tap to roll for {currentPlayer.name} — or they roll from their own phone</p>
             </div>
           )}
 
@@ -140,11 +192,14 @@ function Stage({ classId, code }: { classId: string; code: string }) {
           {g.phase === 'finished' && (
             <div className="bg-center">
               <p className="bg-big">Everybody's home! 🏡</p>
-              <div className="bg-players">{g.players.map((p) => <Avatar key={p.id} p={p} />)}</div>
+              <div className="bg-players">
+                {g.finishedOrder.map((id, i) => {
+                  const p = g.players.find((x) => x.id === id)!;
+                  return <Avatar key={id} p={p} medal={MEDALS[i]} />;
+                })}
+              </div>
             </div>
           )}
-
-          <div className="bg-players bottom">{g.players.map((p) => <Avatar key={p.id} p={p} small current={p.id === pub.currentId} />)}</div>
         </>
       )}
 
@@ -155,14 +210,14 @@ function Stage({ classId, code }: { classId: string; code: string }) {
   );
 }
 
-function Avatar({ p, small, current }: { p: { name: string; species: string; color: number }; small?: boolean; current?: boolean }) {
+function Avatar({ p, medal }: { p: { name: string; species: string; color: number }; medal?: string }) {
   return (
-    <div className={`bg-av ${small ? 'small' : ''} ${current ? 'current' : ''}`}>
-      <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={small ? 48 : 90} animate={false} />
-      <span>{p.name}</span>
+    <div className="bg-av">
+      <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={90} animate={false} />
+      <span>{medal ? `${medal} ` : ''}{p.name}</span>
     </div>
   );
 }
-function Token({ p }: { p: { name: string; species: string; color: number } }) {
-  return <Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={28} animate={false} />;
+function Token({ p, hopping }: { p: { name: string; species: string; color: number }; hopping?: boolean }) {
+  return <span className={hopping ? 'bg-hop' : ''}><Pet species={p.species as SpeciesId} variant={p.color} mood="content" stage="grown" size={28} animate={false} /></span>;
 }
