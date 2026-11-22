@@ -1,80 +1,70 @@
 @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&family=Patrick+Hand&display=swap');
 
 .bg { --bg1: #7a3b17; --bg2: #4a220c; --card: #fffdf4; --ink: #1c1c28; --gold: #ffb23d; --blue: #3aa0ff;
+  --green: #4caf50; --green-ink: #0f3d12; --red: #d9443a;
   min-height: 100dvh; color: #fff; font-family: 'Patrick Hand', system-ui, sans-serif; position: relative;
-  background: radial-gradient(circle at 50% 30%, var(--bg1), var(--bg2)); display: flex; flex-direction: column; align-items: center; padding-bottom: 16vh; }
+  background: radial-gradient(circle at 50% 30%, var(--bg1), var(--bg2)); display: flex; flex-direction: column; align-items: center; padding-bottom: 18vh; }
 .bg *, .bg *::before, .bg *::after { box-sizing: border-box; }
 .bg button { width: auto; margin: 0; }
 .bg-logo { font-family: Bangers, Impact, sans-serif; font-size: clamp(28px, 4vw, 52px); letter-spacing: 2px; color: #ffd27a;
   text-shadow: 3px 3px 0 #7a3b17, -2px -2px 0 #fff; margin: 2vh 0 0; text-align: center; }
 .bg-logo.small { font-size: 24px; margin: 10px 0 4px; }
-.bg-sub { color: #ffe7cf; font-size: clamp(14px, 1.6vw, 18px); margin: 4px 0 14px; text-align: center; }
+.bg-sub { color: #ffe7cf; font-size: clamp(14px, 1.6vw, 20px); margin: 4px 0 12px; text-align: center; }
 .bg-code { font-family: Bangers, Impact, sans-serif; color: var(--gold); letter-spacing: 4px; font-size: 1.3em; font-weight: 400; }
-.bg-center { flex: 1; width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; }
-.bg-big { font-family: Bangers, Impact, sans-serif; font-size: clamp(30px, 5vw, 56px); color: var(--gold); margin: 0; letter-spacing: 1px; }
-.bg-big.small { font-size: 32px; text-align: center; margin-top: 24px; }
+.bg-center { flex: 1; width: 100%; max-width: 1100px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 0 3vw; }
+.bg-big { font-family: Bangers, Impact, sans-serif; font-size: clamp(30px, 5vw, 60px); color: var(--gold); margin: 0; letter-spacing: 1px; }
+.bg-big.small { font-size: 30px; text-align: center; margin-top: 18px; }
 
-/* resource tile board */
-.bg-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 760px; margin: 6px auto 12px; }
-.bg-tile { position: relative; border-radius: 14px; border: 3px solid rgba(0,0,0,.35); padding: 10px 6px 8px; text-align: center; min-height: 92px; }
-.bg-tile.bg-faith { background: #9fd8a0; } .bg-tile.bg-mercy { background: #ffd98a; }
-.bg-tile.bg-thanks { background: #f0a868; } .bg-tile.bg-word { background: #8ec6e8; }
-.bg-tile.bg-pickable { outline: 3px dashed #fff; cursor: pointer; }
-.bg-tile.bg-full { opacity: .55; }
-.bg-tile-icon { font-size: 24px; }
-.bg-tile-num { font-family: Bangers, Impact, sans-serif; color: #2a1d0f; font-size: 20px; display: block; }
-.bg-tile-label { font-size: 11px; color: #2a1d0f; display: block; }
-.bg-tile-settlers { display: flex; justify-content: center; gap: 3px; margin-top: 2px; flex-wrap: wrap; }
-.bg-settler { position: relative; }
-.bg-settler.bg-temple::after { content: '⛩️'; position: absolute; top: -10px; right: -6px; font-size: 13px; }
+/* cards */
+.bg-green { background: var(--green); color: #fff; border: 5px solid #fff; border-radius: 16px; padding: 18px 34px; box-shadow: 0 8px 0 rgba(0,0,0,.35);
+  transform: rotate(-2deg); text-align: center; }
+.bg-green small { display: block; font-size: 14px; letter-spacing: 2px; opacity: .85; }
+.bg-green b { display: block; font-family: Bangers, Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 7vw, 84px); letter-spacing: 2px; line-height: 1.05; }
+.bg-green.small { padding: 10px 20px; transform: none; box-shadow: 0 4px 0 rgba(0,0,0,.35); }
+.bg-green.small b { font-size: 36px; }
+.bg-reds { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; width: 100%; margin-top: 10px; }
+.bg-red { position: relative; background: var(--card); color: var(--ink); border: 4px solid var(--red); border-radius: 12px; padding: 16px 14px;
+  font-family: 'Permanent Marker', cursive; font-size: clamp(16px, 1.9vw, 24px); line-height: 1.25; min-height: 96px; width: 210px;
+  display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: 0 5px 0 rgba(0,0,0,.35); }
+.bg-red:nth-child(odd) { transform: rotate(-1.5deg); } .bg-red:nth-child(even) { transform: rotate(1.5deg); }
+.bg-red.pickable { cursor: pointer; }
+.bg-red.pickable:hover { outline: 4px solid var(--gold); }
+.bg-red.win { border-color: var(--gold); background: #fff6cf; transform: scale(1.08) rotate(0); outline: 6px solid var(--gold); }
+.bg-red.dim { opacity: .45; }
+.bg-red small { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #222; font: 16px 'Patrick Hand', sans-serif;
+  padding: 1px 10px; border-radius: 12px; white-space: nowrap; }
+@keyframes bg-flip { from { transform: rotateY(90deg); opacity: 0; } to { transform: rotateY(0); opacity: 1; } }
+.bg-reds.flip .bg-red { animation: bg-flip .35s ease-out backwards; }
+.bg-reds.flip .bg-red:nth-child(2) { animation-delay: .08s; } .bg-reds.flip .bg-red:nth-child(3) { animation-delay: .16s; }
+.bg-reds.flip .bg-red:nth-child(4) { animation-delay: .24s; } .bg-reds.flip .bg-red:nth-child(5) { animation-delay: .32s; }
+.bg-reds.flip .bg-red:nth-child(n+6) { animation-delay: .4s; }
+.bg-facedown { width: 90px; height: 120px; border-radius: 10px; background: repeating-linear-gradient(45deg, var(--red), var(--red) 10px, #b8352d 10px, #b8352d 20px);
+  border: 4px solid #fff; box-shadow: 0 4px 0 rgba(0,0,0,.35); }
+.bg-lens { font-family: 'Permanent Marker', cursive; color: #ffe7cf; font-size: clamp(16px, 1.9vw, 24px); max-width: 860px; margin-top: 14px; }
+.bg-lens b { display: block; color: var(--gold); font: 400 18px 'Patrick Hand', sans-serif; margin-top: 4px; }
 
-.bg-turn { text-align: center; margin: 6px 0 10px; }
-.bg-card { background: var(--card); color: var(--ink); border-radius: 14px; padding: 18px 22px; max-width: 700px; margin: 10px auto; text-align: center; box-shadow: 0 6px 0 rgba(0,0,0,.35); }
-.bg-tag { font-family: Bangers, Impact, sans-serif; letter-spacing: 1px; color: #7a3b17; font-size: clamp(18px, 2.2vw, 26px); margin: 0 0 8px; }
-.bg-ask { font-family: 'Permanent Marker', cursive; font-size: clamp(16px, 2vw, 22px); margin: 6px 0; }
-.bg-ask.small { font-size: 17px; }
-.bg-answer { color: #3b6b3b; font-weight: bold; margin: 4px 0 10px; }
-.bg-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
-
+/* players + scores */
 .bg-players { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 10px; }
-.bg-av { display: flex; flex-direction: column; align-items: center; font-size: 16px; opacity: .85; }
+.bg-players.bottom { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; padding: 8px 4px; background: rgba(0,0,0,.3); gap: 10px; }
+.bg-av { display: flex; flex-direction: column; align-items: center; font-size: 16px; opacity: .8; position: relative; }
 .bg-av.small { font-size: 13px; }
-.bg-av.current { opacity: 1; } .bg-av.current svg { filter: drop-shadow(0 0 8px var(--gold)); }
+.bg-av.done { opacity: 1; } .bg-av.done span::after { content: ' ✓'; color: #7dff9a; }
+.bg-av.judge { opacity: 1; } .bg-av.judge svg { filter: drop-shadow(0 0 8px var(--gold)); }
+.bg-av .bg-score { position: absolute; top: -4px; right: -6px; background: var(--green); color: #fff; font: 15px Bangers, Impact, sans-serif;
+  min-width: 22px; height: 22px; border-radius: 11px; display: grid; place-items: center; border: 2px solid #fff; }
+.bg-av .bg-gavel { position: absolute; top: -6px; left: -6px; font-size: 18px; }
+
 .bg-go { font: 600 18px 'Patrick Hand', sans-serif; background: #3a2412; color: #ffe7cf; border: 1px solid #6a3f1f; border-radius: 10px; padding: 8px 14px; cursor: pointer; box-shadow: none; }
 .bg-go.main { background: var(--blue); color: #fff; border: 3px solid #fff; font: 22px Bangers, Impact, sans-serif; letter-spacing: 1px; padding: 10px 22px; box-shadow: 0 4px 0 #1d5fa8; }
 .bg-go:disabled { opacity: .4; cursor: default; }
-.bg-controls { position: fixed; right: 12px; bottom: 80px; z-index: 5; opacity: .4; }
-.bg-controls:hover { opacity: 1; }
+.bg-controls { position: fixed; right: 12px; bottom: 96px; z-index: 5; display: flex; gap: 8px; opacity: .45; }
+.bg-controls:hover, .bg-controls:has(.main) { opacity: 1; }
 .bg-mini { font: 600 14px 'Patrick Hand', sans-serif; background: #3a2412; color: #ffe7cf; border: 1px solid #6a3f1f; border-radius: 10px; padding: 6px 10px; cursor: pointer; }
-
-.bg-die { font-size: 28px; background: var(--card); border: 4px solid #fff; border-radius: 14px; width: 150px; height: 70px; line-height: 1; cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,.35); margin: 6px auto; display: flex; align-items: center; justify-content: center; gap: 10px; }
-.bg-die:disabled { opacity: .7; cursor: default; }
-@keyframes bg-spin { from { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.15); } to { transform: rotate(360deg) scale(1); } }
-.bg-die.spin { animation: bg-spin 0.3s linear infinite; }
-
-/* standings / leaderboard */
-.bg-standings { width: 100%; max-width: 560px; margin: 4px auto 10px; display: flex; flex-direction: column; gap: 6px; }
-.bg-stand-row { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,.2); border-radius: 10px; padding: 4px 10px; }
-.bg-stand-row.current { background: rgba(255,178,61,.3); outline: 2px solid var(--gold); }
-.bg-stand-rank { width: 18px; text-align: center; }
-.bg-stand-name { font-size: 14px; width: 64px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bg-stand-bar { flex: 1; height: 10px; background: rgba(255,255,255,.2); border-radius: 6px; overflow: hidden; }
-.bg-stand-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #ffe07a); transition: width 0.3s ease-out; }
-.bg-stand-pts { font-family: Bangers, Impact, sans-serif; color: var(--gold); width: 24px; text-align: right; }
-
-/* hand of resources */
-.bg-hand { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-.bg-chip { background: var(--card); color: var(--ink); border-radius: 10px; padding: 6px 10px; font-size: 15px; display: flex; align-items: center; gap: 4px; box-shadow: 0 3px 0 rgba(0,0,0,.3); }
-.bg-chip b { font-family: Bangers, Impact, sans-serif; }
-
-/* trades */
-.bg-trades { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
-.bg-trade-card { background: var(--card); color: var(--ink); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
-.bg-trade-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 /* phone */
 .bg-phone { padding: 0 16px 40px; }
-.bg-phone > * { width: 100%; max-width: 440px; }
-.bg-send { width: 100%; background: var(--blue); border: 3px solid #fff; color: #fff; font: 30px Bangers, Impact, sans-serif; letter-spacing: 1px; border-radius: 16px; padding: 22px; box-shadow: 0 4px 0 #1d5fa8; cursor: pointer; margin-top: 10px; }
-.bg-send.bg-rolling { animation: bg-spin 0.3s linear infinite; opacity: .85; }
-.bg-select { width: 100%; font: 18px 'Patrick Hand', sans-serif; padding: 8px; border-radius: 8px; border: 0; margin: 4px 0; }
+.bg-phone > * { max-width: 440px; }
+.bg-phone .bg-reds { flex-direction: column; align-items: stretch; gap: 10px; }
+.bg-phone .bg-red { width: 100%; min-height: 64px; transform: none; font-size: 19px; }
+.bg-phone .bg-red:active { transform: scale(.97); }
+.bg-send { width: 100%; background: var(--blue); border: 3px solid #fff; color: #fff; font: 28px Bangers, Impact, sans-serif; letter-spacing: 1px; border-radius: 16px; padding: 16px; box-shadow: 0 4px 0 #1d5fa8; cursor: pointer; margin-top: 10px; }
