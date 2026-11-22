@@ -10,6 +10,7 @@ import Pet, { COLOR_NAMES, swatch } from '../pet/Pet';
 import ModeToggle from '../lib/ModeToggle';
 import { useCanSwitchTo } from '../lib/roleSwitch';
 import { isShowDay } from '../gameshow/rounds';
+import { isBoardGameWeek } from '../boardgame/board';
 
 const MOOD_TEXT: Record<Mood, string> = {
   thriving: 'is thriving! ✨', content: 'is feeling good', sleepy: 'is a little sleepy', 'misses-you': 'misses you! 💜',
@@ -72,6 +73,8 @@ export default function Home() {
       <p className="pet-meta">{p.name} {MOOD_TEXT[mood]}</p>
       {(isShowDay() || location.search.includes('gs=1')) &&
         <Link to="/gameshow"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>📺 Game Show is on! Bring {p.name} to class</button></Link>}
+      {(isBoardGameWeek() || location.search.includes('bg=1')) &&
+        <Link to="/boardgame"><button className="warm" style={{ fontSize: '1.3rem', padding: '20px 18px' }}>🦃 Board Game! Bring {p.name} to class</button></Link>}
       {painting ? <div className="card pop">
         <div className="swatches">
           {COLOR_NAMES.map((n, i) => {

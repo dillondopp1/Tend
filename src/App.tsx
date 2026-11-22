@@ -13,6 +13,8 @@ import TeacherHome from './screens/teacher/TeacherHome';
 import GameShowHost from './screens/gameshow/Host';
 import GameShowPhone from './screens/gameshow/Phone';
 import GameShowRemote from './screens/gameshow/Remote';
+import BoardGameHost from './screens/boardgame/Host';
+import BoardGamePhone from './screens/boardgame/Phone';
 
 export default function App() {
   return (
@@ -32,6 +34,8 @@ export default function App() {
         <Route path="/teacher/gameshow" element={<GameShowHost />} />
         <Route path="/teacher/remote" element={<GameShowRemote />} />
         <Route path="/gameshow" element={<GameShowPhone />} />
+        <Route path="/teacher/boardgame" element={<BoardGameHost />} />
+        <Route path="/boardgame" element={<BoardGamePhone />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

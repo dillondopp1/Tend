@@ -65,6 +65,7 @@ function ClassCard({ c }: { c: ClassRow }) {
       }}>Share invite</button>
       <Link to={`/teacher/gameshow?class=${c.id}`}><button className="warm">📺 Start Game Show (put this on the TV)</button></Link>
       <Link to={`/teacher/remote?class=${c.id}`}><button className="secondary">📱 Game Show remote (open this on your phone)</button></Link>
+      <Link to={`/teacher/boardgame?class=${c.id}`}><button className="warm">🦃 Start Board Game (put this on the TV)</button></Link>
 
       <div className="glance">
         <div><b>{list.length}</b><span>students</span></div>
