@@ -158,7 +158,7 @@ function Stage({ classId, code }: { classId: string; code: string }) {
               <button className={`bg-die ${rollingFor ? 'spin' : ''}`} onClick={() => doRoll(currentPlayer.id)} disabled={!!rollingFor}>
                 {rollingFor ? '🎲 🎲' : pub.lastRoll ? `🎲${pub.lastRoll[0]} 🎲${pub.lastRoll[1]}` : '🎲 🎲'}
               </button>
-              <p className="bg-sub">Tap to roll for {currentPlayer.name} — or they roll from their own phone</p>
+              <p className="bg-sub">Tap to roll for {currentPlayer.name}, or they roll from their own phone</p>
             </div>
           )}
 
