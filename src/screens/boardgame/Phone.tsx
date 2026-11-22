@@ -6,6 +6,7 @@ import { useSession, isStudentEmail } from '../../lib/useSession';
 import Pet from '../../pet/Pet';
 import type { SpeciesId } from '../../domain/species';
 import { openWire, type PublicState, type Wire } from '../../boardgame/channel';
+import { sfxDiceRoll } from '../../boardgame/sfx';
 import '../../boardgame/boardgame.css';
 
 interface Me { id: string; name: string; species: string; color: number; classId: string }
@@ -36,6 +37,7 @@ export default function BoardGamePhone() {
 
 function Play({ me }: { me: Me }) {
   const [st, setSt] = useState<PublicState | null>(null);
+  const [rolling, setRolling] = useState(false);
   const wire = useRef<Wire | null>(null);
 
   useEffect(() => {
@@ -48,8 +50,17 @@ function Play({ me }: { me: Me }) {
     return () => { clearInterval(hb); document.removeEventListener('visibilitychange', again); w.close(); };
   }, [me]);
 
+  // Clear the local "rolling" spin once the host's real state moves the turn along.
+  useEffect(() => { if (rolling && st?.currentId !== me.id) setRolling(false); }, [st, rolling, me.id]);
+
   const myTurn = st?.currentId === me.id;
-  const roll = () => wire.current?.sendToHost({ t: 'roll', id: me.id });
+  const roll = () => {
+    if (rolling) return;
+    sfxDiceRoll(5);
+    setRolling(true);
+    setTimeout(() => setRolling(false), 2500); // fallback if the host never answers
+    wire.current?.sendToHost({ t: 'roll', id: me.id });
+  };
 
   return (
     <div className="bg bg-phone">
@@ -61,7 +72,7 @@ function Play({ me }: { me: Me }) {
 
       {st && st.phase === 'playing' && !st.pending && (
         myTurn
-          ? <button className="bg-send" onClick={roll}>🎲 ROLL!</button>
+          ? <button className={`bg-send ${rolling ? 'bg-rolling' : ''}`} onClick={roll} disabled={rolling}>{rolling ? '🎲 Rolling…' : '🎲 ROLL!'}</button>
           : <p className="bg-sub">Waiting on {st.players.find((p) => p.id === st.currentId)?.name ?? 'someone'}…</p>
       )}
 

@@ -45,7 +45,25 @@
 .bg-controls:hover { opacity: 1; }
 .bg-mini { font: 600 14px 'Patrick Hand', sans-serif; background: #3a2412; color: #ffe7cf; border: 1px solid #6a3f1f; border-radius: 10px; padding: 6px 10px; cursor: pointer; }
 
+.bg-cell.bg-occupied { box-shadow: 0 0 0 3px rgba(255,255,255,.6) inset; }
+@keyframes bg-hop { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.15); } 100% { transform: translateY(0) scale(1); } }
+.bg-hop { display: inline-block; animation: bg-hop 0.16s ease-out; }
+
+.bg-die { font-size: 44px; background: var(--card); border: 4px solid #fff; border-radius: 14px; width: 84px; height: 84px; line-height: 1; cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,.35); margin: 6px auto; display: block; }
+.bg-die:disabled { opacity: .7; cursor: default; }
+@keyframes bg-spin { from { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.15); } to { transform: rotate(360deg) scale(1); } }
+.bg-die.spin { animation: bg-spin 0.3s linear infinite; }
+
+.bg-standings { width: 100%; max-width: 560px; margin: 4px auto 10px; display: flex; flex-direction: column; gap: 6px; }
+.bg-stand-row { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,.2); border-radius: 10px; padding: 4px 10px; }
+.bg-stand-row.current { background: rgba(255,178,61,.3); outline: 2px solid var(--gold); }
+.bg-stand-rank { width: 18px; text-align: center; }
+.bg-stand-name { font-size: 14px; width: 64px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bg-stand-bar { flex: 1; height: 10px; background: rgba(255,255,255,.2); border-radius: 6px; overflow: hidden; }
+.bg-stand-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #ffe07a); transition: width 0.3s ease-out; }
+
 /* phone */
 .bg-phone { padding: 0 16px 40px; }
 .bg-phone > * { width: 100%; max-width: 440px; }
 .bg-send { width: 100%; background: var(--blue); border: 3px solid #fff; color: #fff; font: 30px Bangers, Impact, sans-serif; letter-spacing: 1px; border-radius: 16px; padding: 22px; box-shadow: 0 4px 0 #1d5fa8; cursor: pointer; margin-top: 10px; }
+.bg-send.bg-rolling { animation: bg-spin 0.3s linear infinite; opacity: .85; }
