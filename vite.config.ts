@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       injectRegister: false, // registered by hand in src/main.tsx so it can poll for updates
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.svg'],
+      workbox: { skipWaiting: true, clientsClaim: true },
       manifest: {
         name: 'Tend',
         short_name: 'Tend',
